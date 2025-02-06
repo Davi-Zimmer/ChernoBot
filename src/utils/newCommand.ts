@@ -1,6 +1,6 @@
-import { Message } from "discord.js";
+import { CommandParams } from "../types/CommandParams.Type";
 
-const newCommand = ( name:string, execute: ( message:Message ) => void ) => {
+const newCommand = ( name:string, execute: ( object:CommandParams ) => void ) => {
     return { 
         name,
         execute
