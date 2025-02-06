@@ -17,8 +17,10 @@ import onReady from "../events/OnReady.Event"
 
 
 // commands
-import ia from "../commands/ia"
+import ia from "../commands/ArtificalInteligence"
 import CommandType from "../types/Command.Type"
+import dmMessage from "../commands/SendTo"
+import move from "../commands/Move"
 
 class ChernoBot {
     private client:Client
@@ -46,15 +48,7 @@ class ChernoBot {
         this.setup()
 
         console.log("Pronto")
-        /*
-            DataManager.setItem('ratao', true)
-
-            console.log( DataManager.getItem() )
-
-            DataManager.delete('ratao')
-            console.log( DataManager.getItem() )
-
-        */
+       
     }
 
     private createClient(){
@@ -78,7 +72,9 @@ class ChernoBot {
 
     private getCommands(){
         return [
-            ia
+            ia,
+            dmMessage,
+            move
         ]
     }
 
@@ -93,13 +89,15 @@ class ChernoBot {
 
     private async executeCommand( message: Message ){
         
-        const args = message.content.split(' ')[ 0 ]
+        const args = message.content.split(' ')
 
-        const command = args.slice( 1 )
+        const command = args[ 0 ].slice( 1 )
+
+        args.shift()
 
         const commandObject = this.commands.find( commandObject => commandObject.name == command )
 
-        if( commandObject ) commandObject.execute( message )
+        if( commandObject ) commandObject.execute( { message, args, client : this.client } )
 
     }
 

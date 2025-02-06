@@ -1,9 +1,13 @@
-import { Message } from "discord.js"
+import { CommandParams } from "./CommandParams.Type"
 
 export default interface CommandType {
 
     name: string
 
-    execute: ( message:Message, args?: string[]  ) => void
+    isStrict?: boolean
+
+    isHidden?: boolean
+
+    execute: ( object : CommandParams  ) => void
     
 }
