@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",              // Alterado para NodeNext
+    "moduleResolution": "nodenext",    // Resolver módulos de forma compatível com o Node.js
+    "target": "ESNext",                // Transpilar para código moderno
+    "esModuleInterop": true,           // Habilita interoperabilidade com módulos CommonJS
+    "allowSyntheticDefaultImports": true, // Permite importações padrão sintéticas
+    "strict": true,                    // Modo estrito
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "lib": ["DOM", "ES6"],             // Bibliotecas utilizadas
+    "outDir": "./dist"                 // Pasta de saída da compilação
+  }
+}
