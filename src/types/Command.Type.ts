@@ -1,4 +1,4 @@
-import { CommandParams } from "./CommandParams.Type"
+import CommandParams from "./CommandParams.Type"
 
 export default interface CommandType {
 

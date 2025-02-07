@@ -1,8 +1,8 @@
-import { CommandParams } from "../types/CommandParams.Type";
+import CommandParams from "../types/CommandParams.Type";
 import newCommand from "../utils/newCommand";
-import { accessDenied, isOwner } from "../utils/security";
+import { accessDenied, isOwner } from "../utils/Security";
 
-const move = newCommand('move', async ( { message, args, client } : CommandParams) => {
+const Move = newCommand('move', async ( { message, args, client } : CommandParams) => {
 
     if( !isOwner( message ) ) {
 
@@ -46,4 +46,4 @@ const move = newCommand('move', async ( { message, args, client } : CommandParam
 
 })
 
-export default move
+export default Move

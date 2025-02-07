@@ -1,8 +1,9 @@
+import CommandParams from "../types/CommandParams.Type";
 import newCommand from "../utils/newCommand";
-import { CommandParams } from "../types/CommandParams.Type";
-import { accessDenied, isOwner } from "../utils/security";
 
-const dmMessage = newCommand( 'sendTo', async ( { message, args, client } : CommandParams ) => {
+import { accessDenied, isOwner } from "../utils/Security";
+
+const DmMessage = newCommand( 'sendTo', async ( { message, args, client } : CommandParams ) => {
     
     if( !isOwner( message ) ) {
 
@@ -39,4 +40,4 @@ const dmMessage = newCommand( 'sendTo', async ( { message, args, client } : Comm
 
 })
 
-export default dmMessage
+export default DmMessage
