@@ -1,4 +1,4 @@
-import { CommandParams } from "../types/CommandParams.Type";
+import CommandParams from "../types/CommandParams.Type"
 
 const newCommand = ( name:string, execute: ( object:CommandParams ) => void ) => {
     return { 

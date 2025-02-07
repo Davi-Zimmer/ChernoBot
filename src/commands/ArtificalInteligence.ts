@@ -1,11 +1,11 @@
 import { Message } from "discord.js"
-import newCommand from "../utils/newCommand"
-import { CommandParams } from "../types/CommandParams.Type"
+import CommandParams from "../types/CommandParams.Type";
+import newCommand from "../utils/newCommand";
 
-const ia = newCommand("ia", async ( { message }: CommandParams ) => {
+const IA = newCommand("ia", async ( { message }: CommandParams ) => {
 
     message.reply("Essa versão ainda não tem integração com a rede neural")
 
 })
 
-export default ia
+export default IA

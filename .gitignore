@@ -3,3 +3,6 @@
 .env
 
 src/database/database.json
+
+
+src/audio
