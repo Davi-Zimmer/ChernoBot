@@ -3,6 +3,7 @@
 .env
 
 src/database/database.json
-
-
 src/audio
+src/speaker/*
+
+ideias.md

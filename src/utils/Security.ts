@@ -1,7 +1,7 @@
 import { Message } from "discord.js";
 import { rnd } from "./Utils";
 
-const isOwner = ( message : Message ) => Number(message.author.id) == Number( process.env.OWNER_ID )
+const isOwner = ( message : Message ) => Number( message.author.id ) == Number( process.env.OWNER_ID )
 
 const accessDenied = ( message : Message ) => {
 

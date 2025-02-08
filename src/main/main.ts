@@ -1,4 +1,3 @@
-
 /**
  * @author Zimsky_Davi
  */
@@ -7,7 +6,7 @@ import dotenv from "dotenv"
 
 dotenv.config()
 
-import Discord, { Client, GatewayIntentBits, Message, MessageReaction, PartialMessageReaction, Partials, PartialUser, User, VoiceBasedChannel, VoiceChannel } from "discord.js" 
+import Discord, { Client, GatewayIntentBits, Message, Partials } from "discord.js" 
 
 import DataManager from "../database/DataManager"
 
@@ -17,20 +16,22 @@ import onReady from "../events/OnReady.Event"
 import onReactionAdd from "../events/OnReactionAdd.Event"
 import onReactionRemove from "../events/OnReactionRemove.Event"
 
-
 // commands
 import IA from "../commands/ArtificalInteligence"
 import DmMessage from "../commands/SendTo"
 import Move from "../commands/Move"
-import Enter from "../commands/Enter"
+import Join from "../commands/Join"
 import Leave from "../commands/Leave"
-
-//
-import { getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice"
-import CommandType from "../types/Command.Type"
-import ReactionEventParams from "../types/ReactionEventParams.Type"
 import Play from "../commands/Play"
 import Test from "../commands/Test"
+import Speak from "../commands/Speak"   
+import ClearChat from "../commands/ClearChat"
+
+//
+import { createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice"
+import CommandType from "../interfaces/Command.Type"
+import ReactionEventParams from "../interfaces/ReactionEventParams.Type"
+import { Readable } from "stream"
 
 
 class ChernoBot {
@@ -88,10 +89,12 @@ class ChernoBot {
             IA,
             DmMessage,
             Move,
-            Enter,
+            Join,
             Leave,
             Play,
-            Test
+            Test,
+            Speak,
+            ClearChat
         ]
     }
 
@@ -101,7 +104,7 @@ class ChernoBot {
 
         onReady( this.client, () => this.ready() )
 
-        onReactionAdd( this.client, (reaction, user) => this.reactionAdded({ reaction, user}) ) 
+        onReactionAdd( this.client, (reaction, user) => this.reactionAdded({ reaction, user }) ) 
     
         onReactionRemove( this.client, (reaction, user) => this.reactionRemoved({ reaction, user}) ) 
 
@@ -129,7 +132,9 @@ class ChernoBot {
 
         const commandObject = this.commands.find( commandObject => commandObject.name == command )
 
-        if( commandObject ) commandObject.execute( { message, args, client : this.client, chernoBot: this } )
+        if( commandObject && !commandObject.options?.disabled ) {
+            commandObject.execute( { message, args, client : this.client, chernoBot: this } )
+        }
 
     }
 
@@ -168,7 +173,7 @@ class ChernoBot {
         this.client.guilds.cache.forEach( guild => {
             const existentConnection = getVoiceConnection( guild.id )
             
-            
+
             console.log( getVoiceConnection( guild.id ) )
 
             if( existentConnection ){
@@ -181,7 +186,6 @@ class ChernoBot {
 
     }
 
-
     public getConnection(){
         return this.connection
     }
@@ -189,7 +193,6 @@ class ChernoBot {
     public setConnection( connection: VoiceConnection){
         this.connection = connection
     }
-
 
     public async joinInVoiceChannel( channelId: string ){
         try {
@@ -212,6 +215,24 @@ class ChernoBot {
     public isInVoiceChannel(){
         return ( this.connection && this.connection.state.status !== VoiceConnectionStatus.Destroyed )
     }
+
+    public playAudio( audio:Buffer<ArrayBufferLike> | string ){
+        
+        const player = createAudioPlayer()
+
+        let audioStream:Readable | undefined
+    
+        if( audio instanceof Buffer ) audioStream = Readable.from( audio )
+
+        const src = createAudioResource( audioStream ?? audio as string  ) 
+
+        player.play( src )
+    
+        this.connection?.subscribe( player )
+
+        return player
+    }
+
 }
 
 const chernobot = new ChernoBot()
