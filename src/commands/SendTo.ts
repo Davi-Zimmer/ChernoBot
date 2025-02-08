@@ -1,43 +1,46 @@
-import CommandParams from "../types/CommandParams.Type";
-import newCommand from "../utils/newCommand";
+import CommandParams from "../interfaces/CommandParams.Type";
+import createCommand from "../utils/CreateCommand";
 
 import { accessDenied, isOwner } from "../utils/Security";
 
-const DmMessage = newCommand( 'sendTo', async ( { message, args, client } : CommandParams ) => {
+const DmMessage = createCommand({
+    name:'sendTo',
+    execute: async ( { message, args, client } : CommandParams ) => {
     
-    if( !isOwner( message ) ) {
+        if( !isOwner( message ) ) {
 
-        accessDenied( message )
+            accessDenied( message )
 
-        return
-    }
+            return
+        }
 
-    const targetUserId = args.shift()
+        const targetUserId = args.shift()
 
-    if( !targetUserId ){
+        if( !targetUserId ){
 
-        message.reply('Informe o id do usuaário e a mensagem a ser envida.')
+            message.reply('Informe o id do usuaário e a mensagem a ser envida.')
 
-        return
-    }
+            return
+        }
 
-    client.users.fetch( targetUserId )
+        client.users.fetch( targetUserId )
 
-    .then( user => {
+        .then( user => {
 
-        user.send( args.join(' ') )
+            user.send( args.join(' ') )
+            
+            message.reply('Mensagem enviada.')
+        })
+
+        .catch( ex => {
+            
+            console.log( ex )
+
+            message.reply("Houve um erro ao enviar a mensagem.")
         
-        message.reply('Mensagem enviada.')
-    })
+        })
 
-    .catch( ex => {
-        
-        console.log( ex )
-
-        message.reply("Houve um erro ao enviar a mensagem.")
-    
-    })
-
+    }
 })
 
 export default DmMessage

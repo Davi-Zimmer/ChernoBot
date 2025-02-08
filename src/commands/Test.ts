@@ -1,13 +1,14 @@
-import { EndBehaviorType } from "@discordjs/voice";
-import CommandParams from "../types/CommandParams.Type";
-import newCommand from "../utils/newCommand";
-import fs from 'fs'
+import CommandParams from "../interfaces/CommandParams.Type";
+import createCommand from "../utils/CreateCommand";
 
 
-const Test = newCommand('test', ( { client, chernoBot, message, args } : CommandParams ) => {
+const Test = createCommand({
+    name: 'test',
+    execute: ( { client, chernoBot, message, args } : CommandParams ) => {
     
-    message.reply('Test?')
+
     
+    }    
 })
 
 

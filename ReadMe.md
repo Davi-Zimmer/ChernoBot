@@ -1,11 +1,15 @@
-quando quiser transpilar essa bomba, n se esqueça de botar isso no package.json
-```Json
-"type": "module",
-```
-
-dps que a transpilação for feita, tire isso pra n dar erro no ts-node
+# Dependências externas
+Até a versão X.X.X.X, existe apenas uma depencência
+[Espeak](https://espeak.sourceforge.net/download.html) baixe a versão (Compiled for Windows. SAPI5 and command-line versions.)
 
 
-# Notas
+# Instalação
+- `npm install` ou `npm i` no console pra baixar as depencências.
+- Se quiser o speaker, baixe-o e instale dentro da pasta "speaker" em `src/speaker`, caso contrario, desavite o comando "Speak" em `src/commands/Speak.ts`, adicionando `{ options: { disabled: true } }` no objeto do `createCommand`
 
-- Descobri que da pra adicionar eventos no canal de voz.
+
+# Transpilação
+Não é possivel transpilar ainda, seja la qual for o motivo ou configuração.
+
+
+

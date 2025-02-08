@@ -1,20 +1,23 @@
-import CommandParams from "../types/CommandParams.Type";
-import newCommand from "../utils/newCommand";
+import CommandParams from "../interfaces/CommandParams.Type";
+import createCommand from "../utils/CreateCommand";
 
-const Leave = newCommand('leave', ({ message, chernoBot }: CommandParams) => {
+const Leave = createCommand({
+    name: 'leave',
+    execute: ({ message, chernoBot }: CommandParams) => {
 
-    const connection = chernoBot.getConnection()
+        const connection = chernoBot.getConnection()
 
-    if( !chernoBot.isInVoiceChannel() ){
+        if( !chernoBot.isInVoiceChannel() ){
 
-        message.reply('Não estou em nenhuma call.')
-        
-        return
+            message.reply('Não estou em nenhuma call.')
+            
+            return
+        }
+
+        connection?.destroy()
+
+
     }
-
-    connection?.destroy()
-
-
 })
 
 export default Leave
