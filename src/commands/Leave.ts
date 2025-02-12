@@ -1,9 +1,12 @@
-import CommandParams from "../interfaces/CommandParams.Type";
-import createCommand from "../utils/CreateCommand";
+import CommandParams from "../interfaces/CommandParams.Type"
+import createCommand from "../utils/CreateCommand"
+
+import getForeGoundColors from "../classes/AnsiText"
+const fgc = getForeGoundColors()
 
 const Leave = createCommand({
     name: 'leave',
-    execute: ({ message, chernoBot }: CommandParams) => {
+    execute: ({ message, chernoBot } : CommandParams) => {
 
         const connection = chernoBot.getConnection()
 
@@ -17,7 +20,8 @@ const Leave = createCommand({
         connection?.destroy()
 
 
-    }
+    },
+    description: fgc.Cyan('Sai da call.')
 })
 
 export default Leave

@@ -1,7 +1,7 @@
 import { Message } from "discord.js";
 import { rnd } from "./Utils";
 
-const isOwner = ( message : Message ) => Number( message.author.id ) == Number( process.env.OWNER_ID )
+const isBotOwner = ( message : Message ) => Number( message.author.id ) == Number( process.env.OWNER_ID )
 
 const accessDenied = ( message : Message ) => {
 
@@ -24,6 +24,6 @@ const accessDenied = ( message : Message ) => {
 }
 
 export {
-    isOwner,
+    isBotOwner as isOwner,
     accessDenied
 }

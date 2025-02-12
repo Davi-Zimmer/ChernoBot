@@ -2,8 +2,12 @@ import CommandParams from "../interfaces/CommandParams.Type";
 import createCommand from "../utils/CreateCommand";
 import { accessDenied, isOwner } from "../utils/Security";
 
+import getForeGoundColors from "../classes/AnsiText";
+const fgc = getForeGoundColors()
+
 const Move = createCommand({
-    name:'move', execute: async ( { message, args, client } : CommandParams) => {
+    name:'move',
+    execute: async ( { message, args, client } : CommandParams) => {
 
         if( !isOwner( message ) ) {
     
@@ -45,7 +49,9 @@ const Move = createCommand({
         } catch {}
     
     
-    }
+    },
+
+    description: fgc.Cyan('Move todos os usuários de uma call pra outra.')
 })
 
 export default Move

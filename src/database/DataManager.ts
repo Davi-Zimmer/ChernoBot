@@ -1,5 +1,6 @@
 import fs from "fs"
 import path from "path"
+import GuildDatabase from "../interfaces/GuildsDatabase"
 
 
 export default class DataManager {
@@ -29,7 +30,7 @@ export default class DataManager {
 
     }
 
-    public static setItem( key:string, data: number | string | boolean ){
+    public static setItem( key:string, data: number | string | boolean | Array< any > ){
         
         const database = this.loadDatabase()
 
@@ -46,6 +47,34 @@ export default class DataManager {
         delete database[ key ]
 
         this.save( database )
+
+    }
+
+    public static getItem( key: string){
+
+        return this.database[ key ]
+
+    }
+
+    public static addGuild( guildId:string ){
+
+        let guilds = this.getItem('guilds')
+
+        if( !guilds ){
+            
+            this.setItem('guilds', [] )
+            
+            guilds = this.getItem('guilds')
+        }
+
+        guilds.push({ id: guildId })
+
+        this.setItem('guilds', guilds)
+    }
+
+    public static getGuilds( ){
+
+        return (this.getItem( 'guilds' ) ?? []) as GuildDatabase[]
 
     }
 }

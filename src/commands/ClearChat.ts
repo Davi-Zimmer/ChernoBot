@@ -1,5 +1,8 @@
-import CommandParams from "../interfaces/CommandParams.Type";
-import createCommand from "../utils/CreateCommand";
+import CommandParams from "../interfaces/CommandParams.Type"
+import createCommand from "../utils/CreateCommand"
+
+import getForeGoundColors from "../classes/AnsiText"
+const fgc = getForeGoundColors()
 
 const ClearChat = createCommand({
     name:"clearChat",
@@ -40,6 +43,12 @@ const ClearChat = createCommand({
 
         })
         */
+    },
+
+    description: fgc.Cyan('Limpa o chat.'),
+
+    options: {
+        // permission: 
     }
 
 })

@@ -1,5 +1,5 @@
 import { Client, Message } from "discord.js";
-import ChernoBot from "../main/Main";
+import ChernoBot from "../main/Main.js";
 
 export default interface CommandParams {
 

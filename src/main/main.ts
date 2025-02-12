@@ -6,7 +6,7 @@ import dotenv from "dotenv"
 
 dotenv.config()
 
-import Discord, { Client, GatewayIntentBits, Message, Partials } from "discord.js" 
+import Discord, { Client, GatewayIntentBits, Message, Partials, PermissionFlags, PermissionFlagsBits, PermissionsBitField } from "discord.js" 
 
 import DataManager from "../database/DataManager"
 
@@ -26,12 +26,20 @@ import Play from "../commands/Play"
 import Test from "../commands/Test"
 import Speak from "../commands/Speak"   
 import ClearChat from "../commands/ClearChat"
+import Batch from "../commands/Batch"
 
 //
 import { createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice"
 import CommandType from "../interfaces/Command.Type"
 import ReactionEventParams from "../interfaces/ReactionEventParams.Type"
 import { Readable } from "stream"
+import path from "path"
+import espeak from 'espeak'
+import { getParamsAndLanguage, processMessageToSpeak } from "../utils/Utils"
+import Commands from "../commands/Commands"
+import AutoMod from "../classes/AutoMod"
+import StartAI from "../commands/StartAI"
+import { accessDenied } from "../utils/Security"
 
 
 class ChernoBot {
@@ -40,6 +48,8 @@ class ChernoBot {
     private commands: CommandType[]
 
     private connection: VoiceConnection | undefined
+
+    public autoMod?: AutoMod
 
     constructor(){
 
@@ -54,7 +64,9 @@ class ChernoBot {
     }
 
     private ignite(){
+
         this.client.login( process.env.TOKEN )
+
     }
 
     private ready(){
@@ -63,6 +75,38 @@ class ChernoBot {
 
         console.log("Pronto")
        
+    }
+
+    private checkGuilds () {
+
+        const guilds = DataManager.getGuilds()
+        
+        this.client.guilds.cache.forEach( guild => {
+            
+            const exist = guilds.find( guildDb => guildDb.id !== guild.id )
+
+            if( !exist ){
+
+                DataManager.addGuild( guild.id )
+                
+                return
+            }
+
+
+            // checar mutes e outros
+
+        })
+        
+    }
+
+    private setup(){
+
+        this.checkConnection()
+
+        this.checkGuilds()
+
+        this.autoMod = new AutoMod( this )
+
     }
 
     private createClient(){
@@ -84,7 +128,7 @@ class ChernoBot {
         })
     }
 
-    private getCommands(){
+    public getCommands(){
         return [
             IA,
             DmMessage,
@@ -94,7 +138,10 @@ class ChernoBot {
             Play,
             Test,
             Speak,
-            ClearChat
+            ClearChat,
+            Batch,
+            Commands,
+            StartAI
         ]
     }
 
@@ -116,23 +163,67 @@ class ChernoBot {
 
     }
 
-    private reactionRemoved( {reaction, user }: ReactionEventParams){
+    private reactionRemoved( { reaction, user }: ReactionEventParams){
         
         // console.log( user )
 
     }
 
-    private async executeCommand( message: Message ){
+    private permissionConverter( permission: bigint | Readonly<PermissionsBitField> ){
+
+        return new PermissionsBitField( permission )
+
+    }
+
+    private isAllowed( permissionsRequiredBigint?: bigint[], memberPermissionsBitField?: Readonly<PermissionsBitField>){
+        
+        let isAllowed = false
+
+        if( !permissionsRequiredBigint ) return true
+
+        if( !memberPermissionsBitField ) return false
+
+        const memberPermissions = this.permissionConverter( memberPermissionsBitField )
+
+        permissionsRequiredBigint.forEach( bigint => {
+            
+            const permissionRequired = this.permissionConverter( bigint )
+
+            if( isAllowed ) return
+            
+            isAllowed = memberPermissions.has( permissionRequired )
+
+        })
+
+        return isAllowed
+
+    }
+
+    private async executeCommand( message: Message, command?: string ){
         
         const args = message.content.split(' ')
 
-        const command = args[ 0 ].slice( 1 )
+        const commandName = command ?? args[ 0 ].slice( 1 )
 
         args.shift()
 
-        const commandObject = this.commands.find( commandObject => commandObject.name == command )
-
+        const commandObject = this.commands.find( commandObject => commandObject.name == commandName )
+        
         if( commandObject && !commandObject.options?.disabled ) {
+
+            const permissionsRequired = commandObject.options?.permissions
+
+            const memberPermissions = message.member?.permissions
+
+            const canUseCommand = this.isAllowed( permissionsRequired, memberPermissions  )
+
+            if( !canUseCommand ){
+                
+                accessDenied( message )
+                
+                return
+            }
+
             commandObject.execute( { message, args, client : this.client, chernoBot: this } )
         }
 
@@ -144,20 +235,33 @@ class ChernoBot {
         
         if( message.author.bot ) return
 
-        if( content.startsWith( process.env.PREFIX! ) ){
+
+        if( !process.env.CLIENT_ID || !process.env.PREFIX ){
+            throw new Error('O ID do cliente ou seu prefixo não foram declarados')
+        }
+
+    
+        if( content.includes( process.env.CLIENT_ID )){
+
+            this.commandBridge('commands', message)
+
+            return
+        }
+
+
+        if( content.startsWith( process.env.PREFIX ) ){
 
             this.executeCommand( message )
 
             return
         }
 
-        // outro tratamento
 
-    }
+        if( this.autoMod?.getAutoModEnabled() ){
 
-    private setup(){
-
-        this.checkConnection()
+            this.autoMod.messageSended( message )
+                        
+        }
 
     }
 
@@ -194,6 +298,10 @@ class ChernoBot {
         this.connection = connection
     }
 
+    public isInVoiceChannel(){
+        return ( this.connection && this.connection.state.status !== VoiceConnectionStatus.Destroyed )
+    }
+
     public async joinInVoiceChannel( channelId: string ){
         try {
 
@@ -212,11 +320,7 @@ class ChernoBot {
         } catch {}
     }
 
-    public isInVoiceChannel(){
-        return ( this.connection && this.connection.state.status !== VoiceConnectionStatus.Destroyed )
-    }
-
-    public playAudio( audio:Buffer<ArrayBufferLike> | string ){
+    public async playAudio( audio:Buffer<ArrayBufferLike> | string ){
         
         const player = createAudioPlayer()
 
@@ -227,10 +331,53 @@ class ChernoBot {
         const src = createAudioResource( audioStream ?? audio as string  ) 
 
         player.play( src )
-    
+        
         this.connection?.subscribe( player )
 
         return player
+    }
+
+    public async speak( args: string[] ){
+
+        const feedback = ( message : string, onError: boolean = true) => ({message, onError})
+
+        const msg = processMessageToSpeak( args )
+
+        const content = msg.args.join(' ')
+    
+        if( !content ) return feedback( "Mensagem sem conteúdo." )
+
+        const { lang, params } = getParamsAndLanguage( msg.params )
+
+        espeak.cmd = path.join( __dirname, '../speaker/command_line/espeak.exe');
+        
+        const configs = [...lang, ...params]
+        
+        espeak.speak(content, configs, (err, wav) => {
+            
+            if( err ) {
+                console.log( err )
+                return feedback( "Algo deu errado." )
+            }
+
+            if( !this.isInVoiceChannel() ) return feedback( "Não esta em um canal de voz." )
+            
+            this.playAudio( wav.buffer )
+
+        })
+        
+        return feedback("OK", false)
+
+    }
+
+    public async commandBridge ( command: string, message: Message ){
+
+        await this.executeCommand( message, command )
+
+    }
+
+    public getClient(){
+        return this.client
     }
 
 }
