@@ -5,9 +5,12 @@ import ffmpeg from "@ffmpeg-installer/ffmpeg";
 
 process.env.FFMPEG_PATH = ffmpeg.path;
 
+import getForeGoundColors from "../classes/AnsiText";
+const fgc = getForeGoundColors()
 
 const Play = createCommand({
-    name:'play', execute:( { chernoBot, args } : CommandParams ) => {
+    name:'play',
+    execute:( { chernoBot, args } : CommandParams ) => {
 
     
         if( !chernoBot.isInVoiceChannel() ){
@@ -20,7 +23,9 @@ const Play = createCommand({
     
         chernoBot.playAudio( audioPath )
         
-    }
+    },
+
+    description: fgc.Cyan('Toca um audio apartir do link.')
 })
 
 export default Play 
