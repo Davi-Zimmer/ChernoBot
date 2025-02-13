@@ -4,6 +4,7 @@ import { accessDenied, isOwner } from "../utils/Security";
 import getForeGoundColors from "../classes/AnsiText";
 import { createCanvas } from 'canvas'
 import { BitField, PermissionFlagsBits, PermissionsBitField } from "discord.js";
+import Log from "../config/Logger";
 
 const Test = createCommand({
     name: 'test',
@@ -11,9 +12,6 @@ const Test = createCommand({
 
         // message.reply('Uhum')
     
-
-        console.log( )
-
        
     },
 

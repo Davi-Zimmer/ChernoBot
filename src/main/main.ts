@@ -3,10 +3,15 @@
  */
 
 import dotenv from "dotenv"
+import { Readable } from "stream"
+import path from "path"
+import espeak from 'espeak'
 
 dotenv.config()
 
-import Discord, { Client, GatewayIntentBits, Message, Partials, PermissionFlags, PermissionFlagsBits, PermissionsBitField } from "discord.js" 
+import Discord, { Client, GatewayIntentBits, Message, Partials, PermissionsBitField } from "discord.js" 
+import { createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice"
+
 
 import DataManager from "../database/DataManager"
 
@@ -27,20 +32,23 @@ import Test from "../commands/Test"
 import Speak from "../commands/Speak"   
 import ClearChat from "../commands/ClearChat"
 import Batch from "../commands/Batch"
+import Commands from "../commands/Commands"
+import StartAI from "../commands/StartAI"
 
-//
-import { createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice"
+//types
 import CommandType from "../interfaces/Command.Type"
 import ReactionEventParams from "../interfaces/ReactionEventParams.Type"
-import { Readable } from "stream"
-import path from "path"
-import espeak from 'espeak'
+
+// assistent functions
 import { getParamsAndLanguage, processMessageToSpeak } from "../utils/Utils"
-import Commands from "../commands/Commands"
-import AutoMod from "../classes/AutoMod"
-import StartAI from "../commands/StartAI"
 import { accessDenied } from "../utils/Security"
+
+
+// important
+import AutoMod from "../classes/AutoMod"
 import Logger from "../config/Logger"
+
+Logger.setConsoleLogs( true )
 
 
 class ChernoBot {
@@ -51,7 +59,6 @@ class ChernoBot {
     private connection: VoiceConnection | undefined
 
     public autoMod?: AutoMod
-
 
     constructor(){
 
@@ -66,11 +73,11 @@ class ChernoBot {
     }
 
     private ignite(){
-        Logger.Info('Iniciando ChernoBot')
+        Logger.info('Iniciando ChernoBot')
 
         this.client.login( process.env.TOKEN )
        
-        Logger.Info('ChernoBot online')
+        Logger.info('ChernoBot online')
 
     }
 
@@ -115,7 +122,7 @@ class ChernoBot {
     }
 
     private createClient(){
-        Logger.Info('Criando cliente...')
+        Logger.info('Criando cliente...')
 
         function newClient(){
             return new Discord.Client({
@@ -138,13 +145,13 @@ class ChernoBot {
 
         const client = newClient()
         
-        Logger.Info('Cliente criado com sucesso.')
+        Logger.info('Cliente criado com sucesso.')
 
         return client
     }
 
     public getCommands(){
-        Logger.Info('Iniciando comandos...')
+        Logger.info('Iniciando comandos...')
 
         const commands = [
             IA,
@@ -161,13 +168,13 @@ class ChernoBot {
             StartAI
         ]
 
-        Logger.Info(`Comandos carregados: ${ commands.length } comandos.`)
+        Logger.info(`Comandos carregados: ${ commands.length + 1 } comandos.`)
 
         return commands
     }
 
     private addEvents(){
-        Logger.Info('Adicionando eventos...')
+        Logger.info('Adicionando eventos...')
 
         onMessage( this.client, msg => this.messageSended( msg ) )
 
@@ -177,7 +184,7 @@ class ChernoBot {
     
         onReactionRemove( this.client, (reaction, user) => this.reactionRemoved({ reaction, user}) ) 
 
-        Logger.Info('Eventos adicionados com sucesso.')
+        Logger.info('Eventos adicionados com sucesso.')
 
     }
 
@@ -249,7 +256,7 @@ class ChernoBot {
 
             if( !canUseCommand ){
 
-                Logger.Info(`${userInfo} ] Não pode usar o comando ${commandName}`)
+                Logger.info(`${userInfo} ] Não pode usar o comando ${commandName}`)
                 
                 accessDenied( message )
                 
@@ -257,7 +264,7 @@ class ChernoBot {
             }
 
 
-            Logger.Info(`${userInfo} -> ${commandName}`)
+            Logger.info(`${userInfo} -> ${commandName}`)
 
             commandObject.execute( { message, args, client : this.client, chernoBot: this } )
         }
@@ -275,7 +282,7 @@ class ChernoBot {
 
             const error = new Error('O ID do cliente ou seu prefixo não foram declarados')
 
-            Logger.Critical( error )
+            Logger.critical( error )
 
             throw error
         }

@@ -1,97 +1,144 @@
 import path from 'path'
-import fs from 'fs'
+import fs, { stat } from 'fs'
 
 type EchoType =  'Info' | 'Debug' | 'Warning' | 'Error' | 'Critical'
 
 class Logger {
 
-    private static ConsoleLogsDisabled = false
+    private static instance: Logger
 
-    private static LogFileDisabled = true
+    private constructor() {}
 
-    private static CurrentLogFilePath = this.GetLogFile()
+    private consoleLogsEnabled = false
 
-    private static RenameFile( logPath: string ){
+    private logFileEnabled = false
 
-        const data = fs.readFileSync( logPath ).toString()
+    private currentLogFilePath = this.getLogFile()
 
-        const match = data.match(/\{(.*?)\}/)
+    public setConsoleLogs( status: boolean ){
 
-        const timestap = match?.[ 1 ].replaceAll(' ', '') || new Date().toISOString()
-
-        const newName = path.join( __dirname, `../logs/${timestap}.log`)
-
-        fs.renameSync( logPath, newName )
+        this.consoleLogsEnabled = status
 
     }
 
-    private static GetLogFile(){
+    public setLogFile( status: boolean ){
 
-        const timestap = Date.now()
-        
-        const logPath = path.join( __dirname, `../logs/latest.log`)
-
-        const exists = fs.existsSync( logPath )
-
-        if( exists ) this.RenameFile( logPath )
-
-        if( this.LogFileDisabled ) return
-
-        fs.writeFileSync( logPath, `{ ${ timestap} }\n` )
-
-        this.CurrentLogFilePath = logPath
-
-        return logPath
+        this.logFileEnabled = status
 
     }
 
-    private static Echo( echoType: EchoType, message: string ){
+    public static GetInstance(){
 
-        const timestap = new Date().toISOString()
+        if ( !Logger.instance ){
 
-        const newdata = `[ ${timestap} ][ ${echoType} ] : ${ message }\n`
-
-        if( this.CurrentLogFilePath ){
-
-            fs.appendFileSync( this.CurrentLogFilePath, newdata )
+            Logger.instance = new Logger()
 
         }
-      
-        if( !this.ConsoleLogsDisabled ) console.log( message )
+
+        return Logger.instance
+    }
+
+    private renameFile( logPath: string ){
+
+        try {
+
+            const data = fs.readFileSync( logPath ).toString()
+
+            const match = data.match(/\{(.*?)\}/)
+    
+            const timestap = match?.[ 1 ].replaceAll(' ', '') || new Date().toISOString()
+    
+            const newName = path.join( __dirname, `../logs/${timestap}.log`)
+    
+            fs.renameSync( logPath, newName )
+
+        } catch ( ex ){
+            console.error( ex )
+        }
+
+    }
+
+    private getLogFile(){
+
+        try {
+            const timestap = Date.now()
+            
+            const logPath = path.join( __dirname, `../logs/latest.log`)
+
+            const exists = fs.existsSync( logPath )
+    
+            if( exists ) this.renameFile( logPath )
+    
+            if( !this.logFileEnabled ) return
+    
+            fs.writeFileSync( logPath, `{ ${ timestap} }\n` )
+    
+            this.currentLogFilePath = logPath
+
+            return logPath
+
+        } catch ( ex ) {
+            console.error( ex )
+        }
+
+    }
+
+    private echo( echoType: EchoType, message: string ){
+
+        try {
+
+            const timestap = new Date().toISOString()
+
+            const newdata = `[ ${timestap} ][ ${echoType} ] : ${ message }\n`
+    
+            if( this.currentLogFilePath ){
+    
+                fs.appendFileSync( this.currentLogFilePath, newdata )
+    
+            }
+          
+            if( this.consoleLogsEnabled ) console.log( message )
+
+        } catch ( ex ){
+            console.error( ex )
+        } 
         
 
     }
  
-    public static Debug( msg: string ){
+    public debug( msg: string ){
 
-        this.Echo( 'Debug', msg )
+        this.echo( 'Debug', msg )
 
     } 
 
-    public static Info( msg: string ){
+    public info( msg: string ){
 
-        this.Echo( 'Info', msg )
-
-    }
-
-    public static Warning( msg: string ){
-
-        this.Echo( 'Info', msg )
+        this.echo( 'Info', msg )
 
     }
 
-    public static Error( msg: string | Error ){
+    public warn( msg: string ){
+
+        this.echo( 'Info', msg )
+
+    }
+
+    public error( msg: string | Error ){
         
-        this.Echo( 'Error', msg.toString() )
+        this.echo( 'Error', msg.toString() )
 
     }
 
-    public static Critical( msg: string | Error ){
+    public critical( msg: string | Error ){
 
-        this.Echo( 'Critical', msg.toString() )
+        this.echo( 'Critical', msg.toString() )
         
     }
 
 }
 
-export default Logger
+const Log = Logger.GetInstance()
+
+
+export default Log
