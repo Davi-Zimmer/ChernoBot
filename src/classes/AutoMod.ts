@@ -17,7 +17,7 @@ class AutoMod {
 
     messageSended( message: Message ){
 
-        const databaseGuilds = DataManager.getItem('guilds')
+        const databaseGuilds = DataManager.GetItem('guilds')
 
         const clientGuilds = this.chernoBot.getClient().guilds.cache
 

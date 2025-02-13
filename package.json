@@ -1,6 +1,6 @@
 {
   "name": "chernobot",
-  "version": "1.18.43.7",
+  "version": "1.19.43.7",
   "main": "main.js",
   "scripts": {
     "dev": "ts-node-dev --transpile-only --inspect --respawn src/main/Main.ts",

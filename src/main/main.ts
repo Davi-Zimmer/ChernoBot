@@ -40,6 +40,7 @@ import Commands from "../commands/Commands"
 import AutoMod from "../classes/AutoMod"
 import StartAI from "../commands/StartAI"
 import { accessDenied } from "../utils/Security"
+import Logger from "../config/Logger"
 
 
 class ChernoBot {
@@ -50,6 +51,7 @@ class ChernoBot {
     private connection: VoiceConnection | undefined
 
     public autoMod?: AutoMod
+
 
     constructor(){
 
@@ -64,8 +66,11 @@ class ChernoBot {
     }
 
     private ignite(){
+        Logger.Info('Iniciando ChernoBot')
 
         this.client.login( process.env.TOKEN )
+       
+        Logger.Info('ChernoBot online')
 
     }
 
@@ -79,7 +84,7 @@ class ChernoBot {
 
     private checkGuilds () {
 
-        const guilds = DataManager.getGuilds()
+        const guilds = DataManager.GetGuilds()
         
         this.client.guilds.cache.forEach( guild => {
             
@@ -87,7 +92,7 @@ class ChernoBot {
 
             if( !exist ){
 
-                DataManager.addGuild( guild.id )
+                DataManager.AddGuild( guild.id )
                 
                 return
             }
@@ -101,7 +106,7 @@ class ChernoBot {
 
     private setup(){
 
-        this.checkConnection()
+        // this.checkConnection()
 
         this.checkGuilds()
 
@@ -110,26 +115,38 @@ class ChernoBot {
     }
 
     private createClient(){
-        return new Discord.Client({
-            intents: [
-                GatewayIntentBits.Guilds,
-                GatewayIntentBits.GuildMessages,
-                GatewayIntentBits.MessageContent,
-                GatewayIntentBits.GuildMessageReactions,
-                GatewayIntentBits.DirectMessages,
-                GatewayIntentBits.GuildVoiceStates
-            ],
-            partials: [
-                Partials.Message,
-                Partials.Channel,
-                Partials.Reaction,
-                Partials.User
-            ]
-        })
+        Logger.Info('Criando cliente...')
+
+        function newClient(){
+            return new Discord.Client({
+                intents: [
+                    GatewayIntentBits.Guilds,
+                    GatewayIntentBits.GuildMessages,
+                    GatewayIntentBits.MessageContent,
+                    GatewayIntentBits.GuildMessageReactions,
+                    GatewayIntentBits.DirectMessages,
+                    GatewayIntentBits.GuildVoiceStates
+                ],
+                partials: [
+                    Partials.Message,
+                    Partials.Channel,
+                    Partials.Reaction,
+                    Partials.User
+                ]
+            })
+        }
+
+        const client = newClient()
+        
+        Logger.Info('Cliente criado com sucesso.')
+
+        return client
     }
 
     public getCommands(){
-        return [
+        Logger.Info('Iniciando comandos...')
+
+        const commands = [
             IA,
             DmMessage,
             Move,
@@ -143,9 +160,14 @@ class ChernoBot {
             Commands,
             StartAI
         ]
+
+        Logger.Info(`Comandos carregados: ${ commands.length } comandos.`)
+
+        return commands
     }
 
     private addEvents(){
+        Logger.Info('Adicionando eventos...')
 
         onMessage( this.client, msg => this.messageSended( msg ) )
 
@@ -154,6 +176,8 @@ class ChernoBot {
         onReactionAdd( this.client, (reaction, user) => this.reactionAdded({ reaction, user }) ) 
     
         onReactionRemove( this.client, (reaction, user) => this.reactionRemoved({ reaction, user}) ) 
+
+        Logger.Info('Eventos adicionados com sucesso.')
 
     }
 
@@ -200,7 +224,7 @@ class ChernoBot {
     }
 
     private async executeCommand( message: Message, command?: string ){
-        
+    
         const args = message.content.split(' ')
 
         const commandName = command ?? args[ 0 ].slice( 1 )
@@ -217,12 +241,23 @@ class ChernoBot {
 
             const canUseCommand = this.isAllowed( permissionsRequired, memberPermissions  )
 
+            const user = message.author
+
+            const userName = user.globalName || user.displayName || user.displayName
+
+            const userInfo = `[ Usuário: ${userName} ID: ${user.id} ]`
+
             if( !canUseCommand ){
+
+                Logger.Info(`${userInfo} ] Não pode usar o comando ${commandName}`)
                 
                 accessDenied( message )
                 
                 return
             }
+
+
+            Logger.Info(`${userInfo} -> ${commandName}`)
 
             commandObject.execute( { message, args, client : this.client, chernoBot: this } )
         }
@@ -230,16 +265,21 @@ class ChernoBot {
     }
 
     private async messageSended( message: Message ){
-
+        
         const content = message.content
         
         if( message.author.bot ) return
 
 
         if( !process.env.CLIENT_ID || !process.env.PREFIX ){
-            throw new Error('O ID do cliente ou seu prefixo não foram declarados')
-        }
 
+            const error = new Error('O ID do cliente ou seu prefixo não foram declarados')
+
+            Logger.Critical( error )
+
+            throw error
+        }
+        
     
         if( content.includes( process.env.CLIENT_ID )){
 
