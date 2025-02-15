@@ -1,5 +1,8 @@
 import path from 'path'
 import fs, { stat } from 'fs'
+import { privateDecrypt } from 'crypto'
+import { time } from 'console'
+import { debounce } from '../utils/Utils'
 
 type EchoType =  'Info' | 'Debug' | 'Warning' | 'Error' | 'Critical'
 
@@ -11,7 +14,9 @@ class Logger {
 
     private consoleLogsEnabled = false
 
-    private logFileEnabled = false
+    private logFileEnabled = true
+
+    private deleteLastLogFile = true
 
     private currentLogFilePath = this.getLogFile()
 
@@ -21,11 +26,20 @@ class Logger {
 
     }
 
+    /*
     public setLogFile( status: boolean ){
 
         this.logFileEnabled = status
 
     }
+
+    public setdeleteLastLog( status: boolean){
+    
+        this.deleteLastLogFile = status
+    
+    }
+
+    */
 
     public static GetInstance(){
 
@@ -36,6 +50,24 @@ class Logger {
         }
 
         return Logger.instance
+    }
+
+    private createLogFolder( logPath :string ){
+
+        fs.mkdirSync( logPath )
+        
+    }
+
+    private checkLogFolder(){
+
+        const logPath = path.join( __dirname, '../logs')
+
+        if( !fs.existsSync(logPath) ){
+
+            this.createLogFolder( logPath )
+
+        }
+
     }
 
     private renameFile( logPath: string ){
@@ -59,6 +91,8 @@ class Logger {
     }
 
     private getLogFile(){
+        
+        this.checkLogFolder()
 
         try {
             const timestap = Date.now()
@@ -67,7 +101,7 @@ class Logger {
 
             const exists = fs.existsSync( logPath )
     
-            if( exists ) this.renameFile( logPath )
+            if( exists && !this.deleteLastLogFile ) this.renameFile( logPath )
     
             if( !this.logFileEnabled ) return
     
@@ -78,24 +112,37 @@ class Logger {
             return logPath
 
         } catch ( ex ) {
+
             console.error( ex )
+
         }
 
     }
 
-    private echo( echoType: EchoType, message: string ){
+    private logText = ''
 
+    private saveLog = debounce( ( ) => {
+
+        if( this.currentLogFilePath ){
+
+            fs.appendFileSync( this.currentLogFilePath, this.logText )
+            
+            this.logText = ''
+
+        }
+
+    }, 500)
+
+
+    private echo( echoType: EchoType, message: string ){
+      
         try {
 
             const timestap = new Date().toISOString()
 
-            const newdata = `[ ${timestap} ][ ${echoType} ] : ${ message }\n`
-    
-            if( this.currentLogFilePath ){
-    
-                fs.appendFileSync( this.currentLogFilePath, newdata )
-    
-            }
+            this.logText += `[ ${timestap} ][ ${echoType} ] : ${ message }\n`
+
+            this.saveLog()
           
             if( this.consoleLogsEnabled ) console.log( message )
 
@@ -124,9 +171,9 @@ class Logger {
 
     }
 
-    public error( msg: string | Error ){
+    public error( msg: string, error: Error ){
         
-        this.echo( 'Error', msg.toString() )
+        this.echo( 'Error', `${msg} : ${error}` )
 
     }
 

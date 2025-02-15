@@ -1,26 +1,55 @@
 import fs from "fs"
 import path from "path"
 import GuildDatabase from "../interfaces/GuildsDatabase"
+import Log from "../config/Logger"
 
+
+const databaseErrorMsg = 'O arquivo "database.json" não existe'
 
 export default class DataManager {
     public static readonly DbPath = path.join( __dirname, './database.json') 
 
     private static Database = this.LoadDatabase()
 
+    private static CreateDatabaseFile(){
+
+        fs.writeFileSync( this.DbPath, '{}')
+
+    }
+
     private static LoadDatabase(){
+    
+        try {
 
-        const rawdata = fs.readFileSync( this.DbPath, 'utf-8')
+            const exist = fs.existsSync( this.DbPath )
 
-        const jsonData = JSON.parse( rawdata )
+            if( !exist ) this.CreateDatabaseFile()
+            
+            const rawdata = fs.readFileSync( this.DbPath, 'utf-8')
+    
+            const jsonData = JSON.parse( rawdata )
+    
+            this.Database = jsonData
+    
+            return jsonData
 
-        this.Database = jsonData
+        } catch ( ex ) {
 
-        return jsonData
+            if( ex instanceof Error )
+
+            Log.error(  `${databaseErrorMsg}`, ex as Error  )
+        }
 
     }
 
     private static Save( database : Object ){
+
+        if( !this.Database ){
+
+            Log.error('Datamanager/', new Error( databaseErrorMsg ))
+
+            return
+        }
 
         const stringData = JSON.stringify( database, null, 2  )
 
@@ -34,6 +63,8 @@ export default class DataManager {
         
         const database = this.LoadDatabase()
 
+        if( !database ) return
+        
         database[ key ] = data
 
         this.Save( database )
@@ -50,7 +81,7 @@ export default class DataManager {
 
     }
 
-    public static GetItem( key: string){
+    public static GetItem( key: string ){
 
         return this.Database[ key ]
 

@@ -13,7 +13,6 @@ import Discord, { Client, GatewayIntentBits, Message, Partials, PermissionsBitFi
 import { createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice"
 
 
-import DataManager from "../database/DataManager"
 
 // events
 import onMessage from "../events/OnMessage.Event"
@@ -45,11 +44,13 @@ import { accessDenied } from "../utils/Security"
 
 
 // important
+import DataManager from "../database/DataManager"
 import AutoMod from "../classes/AutoMod"
-import Logger from "../config/Logger"
+import Log from "../config/Logger"
 
-Logger.setConsoleLogs( true )
-
+// Log.setConsoleLogs( true )
+// Log.setdeleteLastLog( true )
+// Log.setLogFile( true )
 
 class ChernoBot {
     private client:Client
@@ -73,11 +74,11 @@ class ChernoBot {
     }
 
     private ignite(){
-        Logger.info('Iniciando ChernoBot')
+        Log.info('Main> Iniciando ChernoBot')
 
         this.client.login( process.env.TOKEN )
        
-        Logger.info('ChernoBot online')
+        Log.info('Main> ChernoBot online')
 
     }
 
@@ -122,7 +123,7 @@ class ChernoBot {
     }
 
     private createClient(){
-        Logger.info('Criando cliente...')
+        Log.info('Main> Criando cliente...')
 
         function newClient(){
             return new Discord.Client({
@@ -145,13 +146,13 @@ class ChernoBot {
 
         const client = newClient()
         
-        Logger.info('Cliente criado com sucesso.')
+        Log.info('Main> Cliente criado com sucesso.')
 
         return client
     }
 
     public getCommands(){
-        Logger.info('Iniciando comandos...')
+        Log.info('Main> Iniciando comandos...')
 
         const commands = [
             IA,
@@ -168,13 +169,13 @@ class ChernoBot {
             StartAI
         ]
 
-        Logger.info(`Comandos carregados: ${ commands.length + 1 } comandos.`)
+        Log.info(`Main> Comandos carregados: ${ commands.length + 1 } comandos.`)
 
         return commands
     }
 
     private addEvents(){
-        Logger.info('Adicionando eventos...')
+        Log.info('Main> Adicionando eventos...')
 
         onMessage( this.client, msg => this.messageSended( msg ) )
 
@@ -184,7 +185,7 @@ class ChernoBot {
     
         onReactionRemove( this.client, (reaction, user) => this.reactionRemoved({ reaction, user}) ) 
 
-        Logger.info('Eventos adicionados com sucesso.')
+        Log.info('Main> Eventos adicionados com sucesso.')
 
     }
 
@@ -256,7 +257,7 @@ class ChernoBot {
 
             if( !canUseCommand ){
 
-                Logger.info(`${userInfo} ] Não pode usar o comando ${commandName}`)
+                Log.info(`Main> ${userInfo} ] Não pode usar o comando ${commandName}`)
                 
                 accessDenied( message )
                 
@@ -264,7 +265,7 @@ class ChernoBot {
             }
 
 
-            Logger.info(`${userInfo} -> ${commandName}`)
+            Log.info(`Main> ${userInfo} -> ${commandName}`)
 
             commandObject.execute( { message, args, client : this.client, chernoBot: this } )
         }
@@ -282,7 +283,7 @@ class ChernoBot {
 
             const error = new Error('O ID do cliente ou seu prefixo não foram declarados')
 
-            Logger.critical( error )
+            Log.critical( error )
 
             throw error
         }
@@ -384,36 +385,61 @@ class ChernoBot {
         return player
     }
 
-    public async speak( args: string[] ){
-
-        const feedback = ( message : string, onError: boolean = true) => ({message, onError})
+    private babushka( args: string[] ){
 
         const msg = processMessageToSpeak( args )
 
         const content = msg.args.join(' ')
     
-        if( !content ) return feedback( "Mensagem sem conteúdo." )
+        if( !content ) throw new Error('Sem conteúdo na mensagem')
 
         const { lang, params } = getParamsAndLanguage( msg.params )
 
         espeak.cmd = path.join( __dirname, '../speaker/command_line/espeak.exe');
         
-        const configs = [...lang, ...params]
+        return {
+            configs: [...lang, ...params],
+            content
+        }
+
+    }
+
+    public async speak( args: string[] ){
         
-        espeak.speak(content, configs, (err, wav) => {
-            
-            if( err ) {
-                console.log( err )
-                return feedback( "Algo deu errado." )
+        const feedback = ( message : string, onError: boolean = true) => ({message, onError})
+        try {
+
+            const { configs, content } = this.babushka( args )
+
+            if( !content ){
+                feedback('e')
             }
-
-            if( !this.isInVoiceChannel() ) return feedback( "Não esta em um canal de voz." )
-            
-            this.playAudio( wav.buffer )
-
-        })
         
-        return feedback("OK", false)
+            espeak.speak(content, configs, (err, wav) => {
+                
+                if( err ) {
+
+                    console.log( err )
+
+                    return feedback( "Algo deu errado." )
+                }
+    
+                if( !this.isInVoiceChannel() ) return feedback( "Não esta em um canal de voz." )
+                
+                this.playAudio( wav.buffer )
+    
+            })
+            
+            return feedback("OK", false)
+        } catch ( ex ) {
+
+            console.error( ex )
+        
+            Log.error('Main> Erro no TTS', ex as Error)
+
+            return feedback("Erro no speaker.")
+        }
+
 
     }
 
