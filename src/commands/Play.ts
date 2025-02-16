@@ -5,7 +5,7 @@ import ffmpeg from "@ffmpeg-installer/ffmpeg";
 
 process.env.FFMPEG_PATH = ffmpeg.path;
 
-import getForeGoundColors from "../classes/AnsiText";
+import getForeGoundColors from "../classes/ForegroundColors";
 const fgc = getForeGoundColors()
 
 const Play = createCommand({
@@ -14,6 +14,7 @@ const Play = createCommand({
 
     
         if( !chernoBot.isInVoiceChannel() ){
+            // esperar o bot entrar na call
             return
         }
 

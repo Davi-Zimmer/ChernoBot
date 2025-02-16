@@ -90,6 +90,15 @@ class Logger {
 
     }
 
+    private getCurrentTime(): string {
+        return new Intl.DateTimeFormat('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).format(new Date())
+    }
+
     private getLogFile(){
         
         this.checkLogFolder()
@@ -105,7 +114,7 @@ class Logger {
     
             if( !this.logFileEnabled ) return
     
-            fs.writeFileSync( logPath, `{ ${ timestap} }\n` )
+            fs.writeFileSync( logPath, `{ ${ timestap } }\n` )
     
             this.currentLogFilePath = logPath
 
@@ -133,12 +142,11 @@ class Logger {
 
     }, 500)
 
-
     private echo( echoType: EchoType, message: string ){
       
         try {
 
-            const timestap = new Date().toISOString()
+            const timestap = this.getCurrentTime()
 
             this.logText += `[ ${timestap} ][ ${echoType} ] : ${ message }\n`
 
@@ -150,7 +158,6 @@ class Logger {
             console.error( ex )
         } 
         
-
     }
  
     public debug( msg: string ){
@@ -177,7 +184,7 @@ class Logger {
 
     }
 
-    public critical( msg: string | Error ){
+    public fatal( msg: string | Error ){
 
         this.echo( 'Critical', msg.toString() )
         

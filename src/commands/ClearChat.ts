@@ -1,7 +1,8 @@
 import CommandParams from "../interfaces/CommandParams.Type"
 import createCommand from "../utils/CreateCommand"
 
-import getForeGoundColors from "../classes/AnsiText"
+import getForeGoundColors from "../classes/ForegroundColors"
+import { PermissionsBitField } from "discord.js"
 const fgc = getForeGoundColors()
 
 const ClearChat = createCommand({
@@ -49,6 +50,9 @@ const ClearChat = createCommand({
 
     options: {
         // permission: 
+        permissions: [
+            PermissionsBitField.Flags.ManageMessages
+        ]
     }
 
 })
