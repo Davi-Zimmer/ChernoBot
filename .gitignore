@@ -5,7 +5,7 @@
 src/database/database.json
 src/audio
 src/speaker/*
-
+src/logs/*
 ideias.md
 
 /dist

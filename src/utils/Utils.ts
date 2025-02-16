@@ -43,8 +43,22 @@ function getParamsAndLanguage ( params: string[][] ) {
     return { lang, params: restParams }
 }
 
+function debounce( func: Function, delay: number ){
+        let timeout: null | NodeJS.Timeout = null
+
+        return ( args?: unknown ) => {
+            if( timeout ) clearTimeout( timeout )
+        
+            timeout = setTimeout( () => {
+                func( args )
+            }, delay)
+        }
+
+    }
+
 export { 
     rnd, 
     processMessageToSpeak, 
-    getParamsAndLanguage 
+    getParamsAndLanguage,
+    debounce
 }

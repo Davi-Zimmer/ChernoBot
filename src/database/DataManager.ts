@@ -1,80 +1,111 @@
 import fs from "fs"
 import path from "path"
 import GuildDatabase from "../interfaces/GuildsDatabase"
+import Log from "../config/Logger"
 
+
+const databaseErrorMsg = 'O arquivo "database.json" não existe'
 
 export default class DataManager {
-    public static readonly dbPath = path.join( __dirname, './database.json') 
+    public static readonly DbPath = path.join( __dirname, './database.json') 
 
-    private static database = this.loadDatabase()
+    private static Database = this.LoadDatabase()
 
-    private static loadDatabase(){
+    private static CreateDatabaseFile(){
 
-        const rawdata = fs.readFileSync( this.dbPath, 'utf-8')
-
-        const jsonData = JSON.parse( rawdata )
-
-        this.database = jsonData
-
-        return jsonData
+        fs.writeFileSync( this.DbPath, '{}')
 
     }
 
-    private static save( database : Object ){
+    private static LoadDatabase(){
+    
+        try {
+
+            const exist = fs.existsSync( this.DbPath )
+
+            if( !exist ) this.CreateDatabaseFile()
+            
+            const rawdata = fs.readFileSync( this.DbPath, 'utf-8')
+    
+            const jsonData = JSON.parse( rawdata )
+    
+            this.Database = jsonData
+    
+            return jsonData
+
+        } catch ( ex ) {
+
+            if( ex instanceof Error )
+
+            Log.error(  `${databaseErrorMsg}`, ex as Error  )
+        }
+
+    }
+
+    private static Save( database : Object ){
+
+        if( !this.Database ){
+
+            Log.error('Datamanager/', new Error( databaseErrorMsg ))
+
+            return
+        }
 
         const stringData = JSON.stringify( database, null, 2  )
 
-        this.database = database
+        this.Database = database
 
-        fs.writeFileSync( this.dbPath, stringData )
+        fs.writeFileSync( this.DbPath, stringData )
 
     }
 
-    public static setItem( key:string, data: number | string | boolean | Array< any > ){
+    public static SetItem( key:string, data: number | string | boolean | Array< any > ){
         
-        const database = this.loadDatabase()
+        const database = this.LoadDatabase()
 
+        if( !database ) return
+        
         database[ key ] = data
 
-        this.save( database )
+        this.Save( database )
 
     }
 
-    public static delete( key:string ){
+    public static Delete( key:string ){
        
-        const database = this.loadDatabase()
+        const database = this.LoadDatabase()
         
         delete database[ key ]
 
-        this.save( database )
+        this.Save( database )
 
     }
 
-    public static getItem( key: string){
+    public static GetItem( key: string ){
 
-        return this.database[ key ]
+        return this.Database[ key ]
 
     }
 
-    public static addGuild( guildId:string ){
+    public static AddGuild( guildId:string ){
 
-        let guilds = this.getItem('guilds')
+        let guilds = this.GetItem('guilds')
 
         if( !guilds ){
             
-            this.setItem('guilds', [] )
+            this.SetItem('guilds', [] )
             
-            guilds = this.getItem('guilds')
+            guilds = this.GetItem('guilds')
         }
 
         guilds.push({ id: guildId })
 
-        this.setItem('guilds', guilds)
+        this.SetItem('guilds', guilds)
     }
 
-    public static getGuilds( ){
+    public static GetGuilds( ){
 
-        return (this.getItem( 'guilds' ) ?? []) as GuildDatabase[]
+        return (this.GetItem( 'guilds' ) ?? []) as GuildDatabase[]
 
     }
 }

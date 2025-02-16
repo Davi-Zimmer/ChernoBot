@@ -3,12 +3,16 @@
  */
 
 import dotenv from "dotenv"
+import { Readable } from "stream"
+import path from "path"
+import espeak from 'espeak'
 
 dotenv.config()
 
-import Discord, { Client, GatewayIntentBits, Message, Partials, PermissionFlags, PermissionFlagsBits, PermissionsBitField } from "discord.js" 
+import Discord, { Client, GatewayIntentBits, Message, Partials, PermissionsBitField } from "discord.js" 
+import { createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice"
 
-import DataManager from "../database/DataManager"
+
 
 // events
 import onMessage from "../events/OnMessage.Event"
@@ -27,20 +31,26 @@ import Test from "../commands/Test"
 import Speak from "../commands/Speak"   
 import ClearChat from "../commands/ClearChat"
 import Batch from "../commands/Batch"
+import Commands from "../commands/Commands"
+import StartAI from "../commands/StartAI"
 
-//
-import { createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice"
+//types
 import CommandType from "../interfaces/Command.Type"
 import ReactionEventParams from "../interfaces/ReactionEventParams.Type"
-import { Readable } from "stream"
-import path from "path"
-import espeak from 'espeak'
+
+// assistent functions
 import { getParamsAndLanguage, processMessageToSpeak } from "../utils/Utils"
-import Commands from "../commands/Commands"
-import AutoMod from "../classes/AutoMod"
-import StartAI from "../commands/StartAI"
 import { accessDenied } from "../utils/Security"
 
+
+// important
+import DataManager from "../database/DataManager"
+import AutoMod from "../classes/AutoMod"
+import Log from "../config/Logger"
+
+// Log.setConsoleLogs( true )
+// Log.setdeleteLastLog( true )
+// Log.setLogFile( true )
 
 class ChernoBot {
     private client:Client
@@ -64,8 +74,11 @@ class ChernoBot {
     }
 
     private ignite(){
+        Log.info('Main> Iniciando ChernoBot')
 
         this.client.login( process.env.TOKEN )
+       
+        Log.info('Main> ChernoBot online')
 
     }
 
@@ -79,7 +92,7 @@ class ChernoBot {
 
     private checkGuilds () {
 
-        const guilds = DataManager.getGuilds()
+        const guilds = DataManager.GetGuilds()
         
         this.client.guilds.cache.forEach( guild => {
             
@@ -87,7 +100,7 @@ class ChernoBot {
 
             if( !exist ){
 
-                DataManager.addGuild( guild.id )
+                DataManager.AddGuild( guild.id )
                 
                 return
             }
@@ -101,7 +114,7 @@ class ChernoBot {
 
     private setup(){
 
-        this.checkConnection()
+        // this.checkConnection()
 
         this.checkGuilds()
 
@@ -110,26 +123,38 @@ class ChernoBot {
     }
 
     private createClient(){
-        return new Discord.Client({
-            intents: [
-                GatewayIntentBits.Guilds,
-                GatewayIntentBits.GuildMessages,
-                GatewayIntentBits.MessageContent,
-                GatewayIntentBits.GuildMessageReactions,
-                GatewayIntentBits.DirectMessages,
-                GatewayIntentBits.GuildVoiceStates
-            ],
-            partials: [
-                Partials.Message,
-                Partials.Channel,
-                Partials.Reaction,
-                Partials.User
-            ]
-        })
+        Log.info('Main> Criando cliente...')
+
+        function newClient(){
+            return new Discord.Client({
+                intents: [
+                    GatewayIntentBits.Guilds,
+                    GatewayIntentBits.GuildMessages,
+                    GatewayIntentBits.MessageContent,
+                    GatewayIntentBits.GuildMessageReactions,
+                    GatewayIntentBits.DirectMessages,
+                    GatewayIntentBits.GuildVoiceStates
+                ],
+                partials: [
+                    Partials.Message,
+                    Partials.Channel,
+                    Partials.Reaction,
+                    Partials.User
+                ]
+            })
+        }
+
+        const client = newClient()
+        
+        Log.info('Main> Cliente criado com sucesso.')
+
+        return client
     }
 
     public getCommands(){
-        return [
+        Log.info('Main> Iniciando comandos...')
+
+        const commands = [
             IA,
             DmMessage,
             Move,
@@ -143,9 +168,14 @@ class ChernoBot {
             Commands,
             StartAI
         ]
+
+        Log.info(`Main> Comandos carregados: ${ commands.length + 1 } comandos.`)
+
+        return commands
     }
 
     private addEvents(){
+        Log.info('Main> Adicionando eventos...')
 
         onMessage( this.client, msg => this.messageSended( msg ) )
 
@@ -154,6 +184,8 @@ class ChernoBot {
         onReactionAdd( this.client, (reaction, user) => this.reactionAdded({ reaction, user }) ) 
     
         onReactionRemove( this.client, (reaction, user) => this.reactionRemoved({ reaction, user}) ) 
+
+        Log.info('Main> Eventos adicionados com sucesso.')
 
     }
 
@@ -200,7 +232,7 @@ class ChernoBot {
     }
 
     private async executeCommand( message: Message, command?: string ){
-        
+    
         const args = message.content.split(' ')
 
         const commandName = command ?? args[ 0 ].slice( 1 )
@@ -217,12 +249,23 @@ class ChernoBot {
 
             const canUseCommand = this.isAllowed( permissionsRequired, memberPermissions  )
 
+            const user = message.author
+
+            const userName = user.globalName || user.displayName || user.displayName
+
+            const userInfo = `[ Usuário: ${userName} ID: ${user.id} ]`
+
             if( !canUseCommand ){
+
+                Log.info(`Main> ${userInfo} ] Não pode usar o comando ${commandName}`)
                 
                 accessDenied( message )
                 
                 return
             }
+
+
+            Log.info(`Main> ${userInfo} -> ${commandName}`)
 
             commandObject.execute( { message, args, client : this.client, chernoBot: this } )
         }
@@ -230,16 +273,21 @@ class ChernoBot {
     }
 
     private async messageSended( message: Message ){
-
+        
         const content = message.content
         
         if( message.author.bot ) return
 
 
         if( !process.env.CLIENT_ID || !process.env.PREFIX ){
-            throw new Error('O ID do cliente ou seu prefixo não foram declarados')
-        }
 
+            const error = new Error('O ID do cliente ou seu prefixo não foram declarados')
+
+            Log.critical( error )
+
+            throw error
+        }
+        
     
         if( content.includes( process.env.CLIENT_ID )){
 
@@ -337,36 +385,61 @@ class ChernoBot {
         return player
     }
 
-    public async speak( args: string[] ){
-
-        const feedback = ( message : string, onError: boolean = true) => ({message, onError})
+    private babushka( args: string[] ){
 
         const msg = processMessageToSpeak( args )
 
         const content = msg.args.join(' ')
     
-        if( !content ) return feedback( "Mensagem sem conteúdo." )
+        if( !content ) throw new Error('Sem conteúdo na mensagem')
 
         const { lang, params } = getParamsAndLanguage( msg.params )
 
         espeak.cmd = path.join( __dirname, '../speaker/command_line/espeak.exe');
         
-        const configs = [...lang, ...params]
+        return {
+            configs: [...lang, ...params],
+            content
+        }
+
+    }
+
+    public async speak( args: string[] ){
         
-        espeak.speak(content, configs, (err, wav) => {
-            
-            if( err ) {
-                console.log( err )
-                return feedback( "Algo deu errado." )
+        const feedback = ( message : string, onError: boolean = true) => ({message, onError})
+        try {
+
+            const { configs, content } = this.babushka( args )
+
+            if( !content ){
+                feedback('e')
             }
-
-            if( !this.isInVoiceChannel() ) return feedback( "Não esta em um canal de voz." )
-            
-            this.playAudio( wav.buffer )
-
-        })
         
-        return feedback("OK", false)
+            espeak.speak(content, configs, (err, wav) => {
+                
+                if( err ) {
+
+                    console.log( err )
+
+                    return feedback( "Algo deu errado." )
+                }
+    
+                if( !this.isInVoiceChannel() ) return feedback( "Não esta em um canal de voz." )
+                
+                this.playAudio( wav.buffer )
+    
+            })
+            
+            return feedback("OK", false)
+        } catch ( ex ) {
+
+            console.error( ex )
+        
+            Log.error('Main> Erro no TTS', ex as Error)
+
+            return feedback("Erro no speaker.")
+        }
+
 
     }
 
