@@ -1,6 +1,6 @@
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import createCommand from "../utils/CreateCommand";
-import getForeGoundColors from "../classes/AnsiText";
+import getForeGoundColors from "../classes/ForegroundColors";
 
 const fgc = getForeGoundColors()
 

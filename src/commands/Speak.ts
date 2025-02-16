@@ -1,7 +1,7 @@
 import CommandParams from "../interfaces/CommandParams.Type";
 import createCommand from "../utils/CreateCommand";
 
-import getForeGoundColors from "../classes/AnsiText";
+import getForeGoundColors from "../classes/ForegroundColors";
 const fgc = getForeGoundColors()
 
 const Speak = createCommand({

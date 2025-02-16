@@ -1,7 +1,7 @@
 import fs from "fs"
 import path from "path"
-import GuildDatabase from "../interfaces/GuildsDatabase"
 import Log from "../config/Logger"
+import GuildEntity from "../Entities/GuildEntity"
 
 
 const databaseErrorMsg = 'O arquivo "database.json" não existe'
@@ -35,9 +35,8 @@ export default class DataManager {
 
         } catch ( ex ) {
 
-            if( ex instanceof Error )
-
             Log.error(  `${databaseErrorMsg}`, ex as Error  )
+
         }
 
     }
@@ -46,12 +45,12 @@ export default class DataManager {
 
         if( !this.Database ){
 
-            Log.error('Datamanager/', new Error( databaseErrorMsg ))
+            Log.error('Datamanager> ', new Error( databaseErrorMsg ))
 
             return
         }
 
-        const stringData = JSON.stringify( database, null, 2  )
+        const stringData = JSON.stringify( database, null, 4  )
 
         this.Database = database
 
@@ -87,25 +86,32 @@ export default class DataManager {
 
     }
 
-    public static AddGuild( guildId:string ){
+    public static SetGuild( guild: GuildEntity ){
 
-        let guilds = this.GetItem('guilds')
+        let guilds = this.GetGuilds()
 
-        if( !guilds ){
-            
-            this.SetItem('guilds', [] )
-            
-            guilds = this.GetItem('guilds')
+        const guildExists = guilds.find( dbGuild => dbGuild.id === guild.id )
+        
+        if( guildExists ){
+
+            const index = guilds.indexOf( guildExists )
+
+            guilds[ index ] = guild
+
+        } else {
+
+            guilds.push( guild )
+        
         }
 
-        guilds.push({ id: guildId })
 
-        this.SetItem('guilds', guilds)
+        this.SetItem( 'guilds', guilds )
     }
 
     public static GetGuilds( ){
 
-        return (this.GetItem( 'guilds' ) ?? []) as GuildDatabase[]
+        return (this.GetItem( 'guilds' ) ?? []) as GuildEntity[]
 
     }
+
 }

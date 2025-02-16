@@ -1,43 +1,46 @@
 import CommandParams from "../interfaces/CommandParams.Type";
 import createCommand from "../utils/CreateCommand";
 import { accessDenied, isOwner } from "../utils/Security";
-import getForeGoundColors from "../classes/AnsiText";
+import getForeGoundColors from "../classes/ForegroundColors";
 import { createCanvas } from 'canvas'
 import { BitField, GuildScheduledEventManager, PermissionFlagsBits, PermissionsBitField } from "discord.js";
 import Log from "../config/Logger";
+import CryptoJS from 'crypto-js'
+
 
 const Test = createCommand({
     name: 'test',
     execute: async ( { client, chernoBot, message, args } : CommandParams ) => {
 
         // message.reply('Uhum')
-        const guild = message.guild
+        
+        const type = args.shift()
 
-        if( !guild ){
-            
+        const content = args.join(' ')
+
+        if( !content ){
             return
         }
 
-        const evetnManager = guild.scheduledEvents.create({
-            name: '<@565972325627985941>',
-            scheduledStartTime: new Date(Date.now() + 3600000),
-            scheduledEndTime:  new Date(Date.now() + 36000000),
-            privacyLevel: 2, // Guild only
-            entityType: 3, // External event
-            description: "<@565972325627985941>",
-            entityMetadata: { location: "planeta terra" },
-            image: 'https://static.wikia.nocookie.net/viloes/images/4/4a/Humpty_Dumpty.webp/revision/latest?cb=20240422163803&path-prefix=pt-br',
-            reason: '<@565972325627985941>'
-        })
+        let a = 'E'
 
-        .then( event => {
-            Log.info(`[ ${guild.name}: ${guild.id} ] Evento criado`)
-            console.log( event )
-        })
+        if( type == 'dec'){
 
-        .catch( err => {
-            Log.error(`[ ${guild.name}: ${guild.id} ] erro ao criar evento:`, err)
-        })
+            const e = CryptoJS.AES.decrypt( content, process.env.CRYPTO_SECRET! )
+            
+            a = e.toString(CryptoJS.enc.Utf8)
+
+        }
+        
+        else if( type =='enc'){
+
+            a = CryptoJS.AES.encrypt( content, process.env.CRYPTO_SECRET! ).toString()
+
+
+        }
+
+    
+        message.reply( a )
     },
 
     options: { 

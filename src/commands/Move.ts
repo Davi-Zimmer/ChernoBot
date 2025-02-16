@@ -2,7 +2,8 @@ import CommandParams from "../interfaces/CommandParams.Type";
 import createCommand from "../utils/CreateCommand";
 import { accessDenied, isOwner } from "../utils/Security";
 
-import getForeGoundColors from "../classes/AnsiText";
+import getForeGoundColors from "../classes/ForegroundColors";
+import { PermissionsBitField } from "discord.js";
 const fgc = getForeGoundColors()
 
 const Move = createCommand({
@@ -51,7 +52,13 @@ const Move = createCommand({
     
     },
 
-    description: fgc.Cyan('Move todos os usuários de uma call pra outra.')
+    description: fgc.Cyan('Move todos os usuários de uma call pra outra.'),
+
+    options: {
+        permissions: [
+            PermissionsBitField.Flags.MoveMembers
+        ]
+    }
 })
 
 export default Move

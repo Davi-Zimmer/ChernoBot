@@ -47,6 +47,8 @@ import { accessDenied } from "../utils/Security"
 import DataManager from "../database/DataManager"
 import AutoMod from "../classes/AutoMod"
 import Log from "../config/Logger"
+import GuildEntity from "../Entities/GuildEntity"
+import RegisterConfig from "../commands/RegisterConfigMessage"
 
 // Log.setConsoleLogs( true )
 // Log.setdeleteLastLog( true )
@@ -100,7 +102,9 @@ class ChernoBot {
 
             if( !exist ){
 
-                DataManager.AddGuild( guild.id )
+                const guildEntity = new GuildEntity({ id: guild.id })
+
+                DataManager.SetGuild( guildEntity )
                 
                 return
             }
@@ -166,7 +170,8 @@ class ChernoBot {
             ClearChat,
             Batch,
             Commands,
-            StartAI
+            StartAI,
+            RegisterConfig
         ]
 
         Log.info(`Main> Comandos carregados: ${ commands.length + 1 } comandos.`)
@@ -283,7 +288,7 @@ class ChernoBot {
 
             const error = new Error('O ID do cliente ou seu prefixo não foram declarados')
 
-            Log.critical( error )
+            Log.fatal( error )
 
             throw error
         }
@@ -385,7 +390,7 @@ class ChernoBot {
         return player
     }
 
-    private babushka( args: string[] ){
+    private prepareArgs( args: string[] ){
 
         const msg = processMessageToSpeak( args )
 
@@ -409,10 +414,10 @@ class ChernoBot {
         const feedback = ( message : string, onError: boolean = true) => ({message, onError})
         try {
 
-            const { configs, content } = this.babushka( args )
+            const { configs, content } = this.prepareArgs( args )
 
             if( !content ){
-                feedback('e')
+                return feedback('Sem conteúdo na mensagem')
             }
         
             espeak.speak(content, configs, (err, wav) => {

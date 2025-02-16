@@ -1,9 +1,9 @@
-import GuildDatabase from "../interfaces/GuildsDatabase";
+import GuildEntity from "../Entities/GuildEntity"
 
 class GuildsManager {
-    public guilds: GuildDatabase[] = []
+    public guilds: GuildEntity[] = []
 
-    constructor( guilds: GuildDatabase[] = [] ) {
+    constructor( guilds: GuildEntity[] = [] ) {
         
         this.guilds = guilds
 

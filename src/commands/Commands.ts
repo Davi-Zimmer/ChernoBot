@@ -1,7 +1,7 @@
 import { EmbedBuilder } from "discord.js";
 import CommandParams from "../interfaces/CommandParams.Type";
 import createCommand from "../utils/CreateCommand";
-import getForeGoundColors from "../classes/AnsiText";
+import getForeGoundColors from "../classes/ForegroundColors";
 
 const fgc = getForeGoundColors()
 
@@ -38,15 +38,17 @@ const Commands = createCommand({
             name: "🔧 **Comandos de Administração**", 
             value: `${ansiCommand.join('')}`,
         },
-        { 
-            name: "\n\n\n💬 **Comandos para Membros**", 
-            value: 'EEEEEEEE'
-        }
+        /*
+            { 
+                name: "\n\n\n💬 **Comandos para Membros**", 
+                value: 'EEEEEEEE'
+            }
+        */
         )
         .setFooter({ 
         text: `Desenvolvedor Zim/Davi`, 
         iconURL: iconURL 
-        });
+        })
     
         if( message.channel.isSendable() ){
 

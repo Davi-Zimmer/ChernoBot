@@ -1,4 +1,4 @@
-import getForeGoundColors from "../classes/AnsiText";
+import getForeGoundColors from "../classes/ForegroundColors";
 import CommandParams from "../interfaces/CommandParams.Type";
 import createCommand from "../utils/CreateCommand";
 
