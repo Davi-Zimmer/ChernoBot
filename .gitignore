@@ -1,4 +1,5 @@
 /node_modules
+/dist
 
 .env
 
@@ -7,5 +8,3 @@ src/audio
 src/speaker/*
 src/logs/*
 ideias.md
-
-/dist

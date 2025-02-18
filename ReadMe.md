@@ -1,5 +1,5 @@
 # Dependências externas
-Até a versão X.X.X.X, existe apenas uma depencência
+Até essa versão, existe apenas uma depencência
 [Espeak](https://espeak.sourceforge.net/download.html) baixe a versão (Compiled for Windows. SAPI5 and command-line versions.)
 
 

@@ -1,11 +1,11 @@
-import CommandParams from "../interfaces/CommandParams.Type";
-import createCommand from "../utils/CreateCommand";
+import CommandParams from "../../interfaces/CommandParams.Type";
+import createCommand from "../../utils/CreateCommand";
 import path from "path";
 import ffmpeg from "@ffmpeg-installer/ffmpeg";
 
 process.env.FFMPEG_PATH = ffmpeg.path;
 
-import getForeGoundColors from "../classes/ForegroundColors";
+import getForeGoundColors from "../../classes/ForegroundColors";
 const fgc = getForeGoundColors()
 
 const Play = createCommand({

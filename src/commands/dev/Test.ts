@@ -1,12 +1,14 @@
-import CommandParams from "../interfaces/CommandParams.Type";
-import createCommand from "../utils/CreateCommand";
-import { accessDenied, isOwner } from "../utils/Security";
-import getForeGoundColors from "../classes/ForegroundColors";
+import CommandParams from "../../interfaces/CommandParams.Type";
+import createCommand from "../../utils/CreateCommand";
+import { accessDenied, isOwner } from "../../utils/Security";
+import getForeGoundColors from "../../classes/ForegroundColors";
 import { createCanvas } from 'canvas'
 import { BitField, GuildScheduledEventManager, PermissionFlagsBits, PermissionsBitField } from "discord.js";
-import Log from "../config/Logger";
+import Log from "../../config/Logger";
 import CryptoJS from 'crypto-js'
+import path from "path";
 
+import startSerever from '../../site/main'
 
 const Test = createCommand({
     name: 'test',
@@ -14,33 +16,9 @@ const Test = createCommand({
 
         // message.reply('Uhum')
         
-        const type = args.shift()
-
-        const content = args.join(' ')
-
-        if( !content ){
-            return
-        }
-
-        let a = 'E'
-
-        if( type == 'dec'){
-
-            const e = CryptoJS.AES.decrypt( content, process.env.CRYPTO_SECRET! )
-            
-            a = e.toString(CryptoJS.enc.Utf8)
-
-        }
+        // const server = startSerever()
         
-        else if( type =='enc'){
 
-            a = CryptoJS.AES.encrypt( content, process.env.CRYPTO_SECRET! ).toString()
-
-
-        }
-
-    
-        message.reply( a )
     },
 
     options: { 

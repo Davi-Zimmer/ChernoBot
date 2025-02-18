@@ -1,8 +1,8 @@
-import CommandParams from "../interfaces/CommandParams.Type";
-import createCommand from "../utils/CreateCommand";
+import CommandParams from "../../interfaces/CommandParams.Type";
+import createCommand from "../../utils/CreateCommand";
 
-import getForeGoundColors from "../classes/ForegroundColors";
-import Log from "../config/Logger";
+import getForeGoundColors from "../../classes/ForegroundColors";
+import Log from "../../config/Logger";
 const fgc = getForeGoundColors()
 
 function sendRequest( msg: string ){

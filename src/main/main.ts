@@ -21,18 +21,18 @@ import onReactionAdd from "../events/OnReactionAdd.Event"
 import onReactionRemove from "../events/OnReactionRemove.Event"
 
 // commands
-import IA from "../commands/ArtificalInteligence"
-import DmMessage from "../commands/SendTo"
-import Move from "../commands/Move"
-import Join from "../commands/Join"
-import Leave from "../commands/Leave"
-import Play from "../commands/Play"
-import Test from "../commands/Test"
-import Speak from "../commands/Speak"   
-import ClearChat from "../commands/ClearChat"
-import Batch from "../commands/Batch"
-import Commands from "../commands/Commands"
-import StartAI from "../commands/StartAI"
+import IA from "../commands/ai/ArtificalInteligence"
+import DmMessage from "../commands/utilities/SendTo"
+import Move from "../commands/moderation/Move"
+import Join from "../commands/audio/Join"
+import Leave from "../commands/audio/Leave"
+import Play from "../commands/audio/Play"
+import Test from "../commands/dev/Test"
+import Speak from "../commands/fun/Speak"   
+import ClearChat from "../commands/moderation/ClearChat"
+import Batch from "../commands/utilities/Batch"
+import Commands from "../commands/utilities/Commands"
+import StartAI from "../commands/ai/Neural"
 
 //types
 import CommandType from "../interfaces/Command.Type"
@@ -48,9 +48,9 @@ import DataManager from "../database/DataManager"
 import AutoMod from "../classes/AutoMod"
 import Log from "../config/Logger"
 import GuildEntity from "../Entities/GuildEntity"
-import RegisterConfig from "../commands/RegisterConfigMessage"
+import RegisterConfig from "../commands/moderation/RegisterConfigMessage"
 
-// Log.setConsoleLogs( true )
+Log.setConsoleLogs( true )
 // Log.setdeleteLastLog( true )
 // Log.setLogFile( true )
 
@@ -343,10 +343,6 @@ class ChernoBot {
 
     }
 
-    public getConnection(){
-        return this.connection
-    }
-
     public setConnection( connection: VoiceConnection){
         this.connection = connection
     }
@@ -412,6 +408,7 @@ class ChernoBot {
     public async speak( args: string[] ){
         
         const feedback = ( message : string, onError: boolean = true) => ({message, onError})
+        
         try {
 
             const { configs, content } = this.prepareArgs( args )
@@ -456,6 +453,10 @@ class ChernoBot {
 
     public getClient(){
         return this.client
+    }
+
+    public getConnection(){
+        return this.connection
     }
 
 }

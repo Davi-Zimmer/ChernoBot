@@ -11,6 +11,7 @@ export default class DataManager {
 
     private static Database = this.LoadDatabase()
 
+    
     private static CreateDatabaseFile(){
 
         fs.writeFileSync( this.DbPath, '{}')
@@ -113,5 +114,7 @@ export default class DataManager {
         return (this.GetItem( 'guilds' ) ?? []) as GuildEntity[]
 
     }
+
+    // criar função GetItemOfGuild que retorna um item dentro de uma guild
 
 }

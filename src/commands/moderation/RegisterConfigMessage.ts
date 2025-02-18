@@ -1,8 +1,8 @@
-import  DataManager from "../database/DataManager";
-import GuildEntity from "../Entities/GuildEntity";
-import createCommand from "../utils/CreateCommand";
+import  DataManager from "../../database/DataManager";
+import GuildEntity from "../../Entities/GuildEntity";
+import createCommand from "../../utils/CreateCommand";
 
-import getForeGoundColors from "../classes/ForegroundColors";
+import getForeGoundColors from "../../classes/ForegroundColors";
 import { PermissionsBitField } from "discord.js";
 
 const gfc = getForeGoundColors()

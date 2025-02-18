@@ -1,7 +1,7 @@
-import CommandParams from "../interfaces/CommandParams.Type";
-import createCommand from "../utils/CreateCommand";
+import CommandParams from "../../interfaces/CommandParams.Type";
+import createCommand from "../../utils/CreateCommand";
 
-import { accessDenied, isOwner } from "../utils/Security";
+import { accessDenied, isOwner } from "../../utils/Security";
 
 const DmMessage = createCommand({
     name:'sendTo',
