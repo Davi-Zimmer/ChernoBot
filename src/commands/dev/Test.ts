@@ -3,21 +3,70 @@ import createCommand from "../../utils/CreateCommand";
 import { accessDenied, isOwner } from "../../utils/Security";
 import getForeGoundColors from "../../classes/ForegroundColors";
 import { createCanvas } from 'canvas'
-import { BitField, GuildScheduledEventManager, PermissionFlagsBits, PermissionsBitField } from "discord.js";
+import { BitField, GuildMember, GuildScheduledEvent, GuildScheduledEventManager, GuildScheduledEventStatus, PermissionFlagsBits, PermissionsBitField } from "discord.js";
 import Log from "../../config/Logger";
 import CryptoJS from 'crypto-js'
 import path from "path";
 
-import startSerever from '../../site/main'
+import startSerever from '../../../site/main'
+
+let evetnManager: GuildScheduledEvent<GuildScheduledEventStatus>
 
 const Test = createCommand({
     name: 'test',
     execute: async ( { client, chernoBot, message, args } : CommandParams ) => {
 
-        // message.reply('Uhum')
+        const guild = message.guild
+
+        if( !guild ){
+            
+            return
+        }
+
+        try {
+
+            if( evetnManager ){
+
+                const usersSubscribes = await evetnManager.fetchSubscribers()
         
-        // const server = startSerever()
-        
+                const role = await guild.roles.create({
+                    name: 'evento',
+                    color: '#b31288',
+                })
+                
+                const ids = usersSubscribes.map( user => user.user.id )
+
+                for( const id of ids) {
+                    
+                    const user = await guild.members.fetch( id )
+
+                    user.roles.add( role )
+                }
+                
+                return
+            }
+
+            evetnManager = await guild.scheduledEvents.create({
+                name: '<@565972325627985941>',
+                scheduledStartTime: new Date(Date.now() + 3600000),
+                scheduledEndTime:  new Date(Date.now() + 36000000),
+                privacyLevel: 2,
+                entityType: 3,
+                description: "<@565972325627985941>",
+                entityMetadata: { location: "planeta terra" },
+                image: 'https://static.wikia.nocookie.net/viloes/images/4/4a/Humpty_Dumpty.webp/revision/latest?cb=20240422163803&path-prefix=pt-br',
+                reason: '<@565972325627985941>'
+            })
+
+            
+            Log.info(`Test> [ ${guild.name}: ${guild.id} ] Evento criado`)
+
+
+        } catch ( ex ){
+
+            Log.error(`Test> [ ${guild.name}: ${guild.id} ] erro ao criar evento:`, ex as Error)
+
+        }
 
     },
 
