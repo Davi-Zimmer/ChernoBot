@@ -1,4 +1,5 @@
 /node_modules
+/dist
 
 .env
 
@@ -6,6 +7,12 @@ src/database/database.json
 src/audio
 src/speaker/*
 src/logs/*
+site
+
+src/site
+
 ideias.md
 
-/dist
+
+
+B:\coisas\ChernoBot\src\site

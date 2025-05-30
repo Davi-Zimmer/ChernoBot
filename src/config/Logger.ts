@@ -3,6 +3,8 @@ import fs, { stat } from 'fs'
 import { privateDecrypt } from 'crypto'
 import { time } from 'console'
 import { debounce } from '../utils/Utils'
+import BotConfigs from '../utils/BotConfigs'
+import Dataset from '../interfaces/datasetEnum'
 
 type EchoType =  'Info' | 'Debug' | 'Warning' | 'Error' | 'Critical'
 
@@ -12,11 +14,11 @@ class Logger {
 
     private constructor() {}
 
-    private consoleLogsEnabled = false
+    private consoleLogsEnabled = BotConfigs.getConfig( Dataset.consoleLogs)
 
-    private logFileEnabled = true
+    private logFileEnabled = BotConfigs.getConfig( Dataset.logFile )
 
-    private deleteLastLogFile = true
+    private overwriteLogFile = BotConfigs.getConfig( Dataset.overwriteLogFile )
 
     private currentLogFilePath = this.getLogFile()
 
@@ -110,7 +112,7 @@ class Logger {
 
             const exists = fs.existsSync( logPath )
     
-            if( exists && !this.deleteLastLogFile ) this.renameFile( logPath )
+            if( exists && !this.overwriteLogFile ) this.renameFile( logPath )
     
             if( !this.logFileEnabled ) return
     

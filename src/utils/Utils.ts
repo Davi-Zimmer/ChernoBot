@@ -54,7 +54,7 @@ function debounce( func: Function, delay: number ){
             }, delay)
         }
 
-    }
+}
 
 export { 
     rnd, 

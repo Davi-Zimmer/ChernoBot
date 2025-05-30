@@ -13,7 +13,6 @@ import Discord, { Client, GatewayIntentBits, Message, Partials, PermissionsBitFi
 import { createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice"
 
 
-
 // events
 import onMessage from "../events/OnMessage.Event"
 import onReady from "../events/OnReady.Event"
@@ -21,18 +20,18 @@ import onReactionAdd from "../events/OnReactionAdd.Event"
 import onReactionRemove from "../events/OnReactionRemove.Event"
 
 // commands
-import IA from "../commands/ArtificalInteligence"
-import DmMessage from "../commands/SendTo"
-import Move from "../commands/Move"
-import Join from "../commands/Join"
-import Leave from "../commands/Leave"
-import Play from "../commands/Play"
-import Test from "../commands/Test"
-import Speak from "../commands/Speak"   
-import ClearChat from "../commands/ClearChat"
-import Batch from "../commands/Batch"
-import Commands from "../commands/Commands"
-import StartAI from "../commands/StartAI"
+import IA, { processResponse } from "../commands/ai/ArtificalInteligence"
+import DmMessage from "../commands/utilities/SendTo"
+import Move from "../commands/moderation/Move"
+import Join from "../commands/audio/Join"
+import Leave from "../commands/audio/Leave"
+import Play from "../commands/audio/Play"
+import Test from "../commands/dev/Test"
+import Speak from "../commands/fun/Speak"   
+import ClearChat from "../commands/moderation/ClearChat"
+import Batch from "../commands/utilities/Batch"
+import Commands from "../commands/utilities/Commands"
+import StartAI, { startProcess } from "../commands/ai/Neural"
 
 //types
 import CommandType from "../interfaces/Command.Type"
@@ -48,9 +47,16 @@ import DataManager from "../database/DataManager"
 import AutoMod from "../classes/AutoMod"
 import Log from "../config/Logger"
 import GuildEntity from "../Entities/GuildEntity"
-import RegisterConfig from "../commands/RegisterConfigMessage"
+import RegisterConfig from "../commands/moderation/RegisterConfigMessage"
+import startServer from "../../site/main"
+import { ChildProcessWithoutNullStreams } from "child_process"
+import { response } from "express"
+import fs from 'fs'
+import BotConfigs from "../utils/BotConfigs"
+import Dataset from "../interfaces/datasetEnum"
 
-// Log.setConsoleLogs( true )
+
+Log.setConsoleLogs( true )
 // Log.setdeleteLastLog( true )
 // Log.setLogFile( true )
 
@@ -61,10 +67,12 @@ class ChernoBot {
 
     private connection: VoiceConnection | undefined
 
+    private static instance: ChernoBot
+
     public autoMod?: AutoMod
 
-    constructor(){
-
+    private constructor(){
+        
         this.client = this.createClient()
 
         this.commands = this.getCommands()
@@ -72,7 +80,17 @@ class ChernoBot {
         this.addEvents()
 
         this.ignite()
+    }
 
+    public static getInstance(){
+
+        if( !ChernoBot.instance ){
+
+            ChernoBot.instance = new ChernoBot()
+        
+        }
+    
+        return ChernoBot.instance
     }
 
     private ignite(){
@@ -240,7 +258,7 @@ class ChernoBot {
     
         const args = message.content.split(' ')
 
-        const commandName = command ?? args[ 0 ].slice( 1 )
+        const commandName = command ?? args[ 0 ].replace(process.env.PREFIX!, '')
 
         args.shift()
 
@@ -277,38 +295,100 @@ class ChernoBot {
 
     }
 
+    private executeIA() {
+
+        const terminal = startProcess()
+
+        const send = async ( message:Message ) => {
+
+            const msg = message.content
+
+            const author = message.author
+
+            const sender = author.globalName
+
+            const request = await sendRequest( `sender:"${sender} ${msg}` ) as Response
+            
+            const aIResponse = await processResponse( request )
+
+            message.reply( `<@${author.id}> ${ aIResponse}` )
+
+        }
+
+        return send
+
+    }
+
+    private sendMessageForAI = this.executeIA()
+
+    private shouldUseCommand( message: Message ){
+
+        const usePrefix = BotConfigs.getConfig( Dataset.usePrefix )
+
+        const prefix = process.env.PREFIX
+
+        if( usePrefix && !prefix ){
+
+            const error = new Error('O prefixo do cliente não foi declarado')
+
+            Log.fatal( error )
+
+            throw error
+        }
+
+        if ( !usePrefix ) return true
+
+        return message.content.startsWith( prefix! )
+
+    }
+    
     private async messageSended( message: Message ){
         
         const content = message.content
         
-        if( message.author.bot ) return
+        const userId = message.author.id
 
+        // const echoBotId = ''
 
-        if( !process.env.CLIENT_ID || !process.env.PREFIX ){
+        // if( message.author.bot && userId !== echoBotId ) return
+        const ignoreBoMessages = BotConfigs.getConfig( Dataset.ignoreBotMessages )
 
-            const error = new Error('O ID do cliente ou seu prefixo não foram declarados')
+        if( message.author.bot && !ignoreBoMessages ) return
+
+        // this.sendMessageForAI( message )
+
+        const ignoreDM = BotConfigs.getConfig( Dataset.ignoreDM ) // true
+        // false
+        if( ignoreDM && message.channel.isDMBased() ){
+            
+            Log.info("Main> Ignoring DM Message")
+            
+            return
+        
+        }
+
+        if( !process.env.CLIENT_ID  ){
+
+            const error = new Error('O ID do cliente não foi declarado')
 
             Log.fatal( error )
 
             throw error
         }
         
-    
-        if( content.includes( process.env.CLIENT_ID )){
+        if( content.includes( process.env.CLIENT_ID ) ){
 
-            this.commandBridge('commands', message)
+            this.commandBridge('commands', message )
 
             return
         }
 
-
-        if( content.startsWith( process.env.PREFIX ) ){
+        if( this.shouldUseCommand( message ) ){
 
             this.executeCommand( message )
 
             return
         }
-
 
         if( this.autoMod?.getAutoModEnabled() ){
 
@@ -341,10 +421,6 @@ class ChernoBot {
             }
         })
 
-    }
-
-    public getConnection(){
-        return this.connection
     }
 
     public setConnection( connection: VoiceConnection){
@@ -412,6 +488,7 @@ class ChernoBot {
     public async speak( args: string[] ){
         
         const feedback = ( message : string, onError: boolean = true) => ({message, onError})
+        
         try {
 
             const { configs, content } = this.prepareArgs( args )
@@ -421,7 +498,9 @@ class ChernoBot {
             }
         
             espeak.speak(content, configs, (err, wav) => {
-                
+
+                fs.writeFileSync("./src/audio/test.wav", wav.buffer);
+
                 if( err ) {
 
                     console.log( err )
@@ -458,8 +537,14 @@ class ChernoBot {
         return this.client
     }
 
+    public getConnection(){
+        return this.connection
+    }
+
 }
 
-const chernobot = new ChernoBot()
+const chernoBot = ChernoBot.getInstance()
 
-export default ChernoBot
+const server = startServer()
+
+export { ChernoBot, chernoBot }

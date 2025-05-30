@@ -1,6 +1,6 @@
-import getForeGoundColors from "../classes/ForegroundColors";
-import CommandParams from "../interfaces/CommandParams.Type";
-import createCommand from "../utils/CreateCommand";
+import getForeGoundColors from "../../classes/ForegroundColors";
+import CommandParams from "../../interfaces/CommandParams.Type";
+import createCommand from "../../utils/CreateCommand";
 
 const fgc = getForeGoundColors()
 
