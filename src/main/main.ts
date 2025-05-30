@@ -9,8 +9,8 @@ import espeak from 'espeak'
 
 dotenv.config()
 
-import Discord, { Client, GatewayIntentBits, Message, Partials, PermissionsBitField } from "discord.js" 
-import { createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice"
+import Discord, { Client, GatewayIntentBits, GuildMember, Message, Partials, PermissionsBitField, User } from "discord.js" 
+import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice"
 
 
 // events
@@ -200,7 +200,7 @@ class ChernoBot {
     private addEvents(){
         Log.info('Main> Adicionando eventos...')
 
-        onMessage( this.client, msg => this.messageSended( msg ) )
+        onMessage( this.client, msg => this.onMessageReceived( msg ) )
 
         onReady( this.client, () => this.ready() )
 
@@ -254,45 +254,63 @@ class ChernoBot {
 
     }
 
-    private async executeCommand( message: Message, command?: string ){
-    
-        const args = message.content.split(' ')
+    private getCommandByName( commandName:string ){
+        return this.commands.find( command => command.name === commandName )
+    }
 
-        const commandName = command ?? args[ 0 ].replace(process.env.PREFIX!, '')
+    private hasPermission( command: CommandType, member?: GuildMember ){
+        const required = command.options?.permissions
+        const memberPermissions = member?.permissions
+        return this.isAllowed( required, memberPermissions )
+    }
 
-        args.shift()
+    private logCommand( user: User, commandName:string, isAllowed:boolean ){
+        const userName = user.globalName || user.displayName || user.username
+        const userInfo = `[Usuario: ${ userName } ID: ${user.id} ]`
 
-        const commandObject = this.commands.find( commandObject => commandObject.name == commandName )
-        
-        if( commandObject && !commandObject.options?.disabled ) {
+        if ( !isAllowed ) {
+            Log.info(`Main> ${userInfo} ] Não pode usar o comando ${commandName}`)
+        } else {
+            Log.info(`Main> ${userInfo} -> ${commandName}`)
+        }
+    }
 
-            const permissionsRequired = commandObject.options?.permissions
+    private executeCommand( message: Message, commandName: string, args: string[] ){
 
-            const memberPermissions = message.member?.permissions
+        return new Promise( async ( resolve, reject ) => {
+            const command = this.getCommandByName( commandName )
 
-            const canUseCommand = this.isAllowed( permissionsRequired, memberPermissions  )
+            if( !command || command.options?.disabled) {
+                reject('O comando não existe ou esta desativado. ')
+                return
+            }
+            
+            const isAllowed = this.hasPermission( command, message.member! )
 
-            const user = message.author
+            this.logCommand( message.author, commandName, isAllowed )
 
-            const userName = user.globalName || user.displayName || user.displayName
 
-            const userInfo = `[ Usuário: ${userName} ID: ${user.id} ]`
-
-            if( !canUseCommand ){
-
-                Log.info(`Main> ${userInfo} ] Não pode usar o comando ${commandName}`)
-                
+            if( !isAllowed ) {
                 accessDenied( message )
-                
+                reject('Sem permissão.')
                 return
             }
 
+            const data = await command.execute({ client:this.client, args, chernoBot:this, message })
+            
+            resolve( data )
 
-            Log.info(`Main> ${userInfo} -> ${commandName}`)
+        })
+     
+    }
 
-            commandObject.execute( { message, args, client : this.client, chernoBot: this } )
-        }
+    private async removeCommandFlag( message: Message, command?: string ){
+        
+        const args = message.content.split(' ')
 
+        const commandName = command ?? args.shift()!.replace(process.env.PREFIX!, '')
+
+        await this.executeCommand( message, commandName, args )
     }
 
     private executeIA() {
@@ -342,58 +360,41 @@ class ChernoBot {
 
     }
     
-    private async messageSended( message: Message ){
+    private async onMessageReceived( message: Message ){
         
         const content = message.content
-        
-        const userId = message.author.id
 
-        // const echoBotId = ''
+        const ignoreBotMessages = BotConfigs.getConfig(Dataset.ignoreBotMessages)
 
-        // if( message.author.bot && userId !== echoBotId ) return
-        const ignoreBoMessages = BotConfigs.getConfig( Dataset.ignoreBotMessages )
+        if (message.author.bot && !ignoreBotMessages) return
 
-        if( message.author.bot && !ignoreBoMessages ) return
+        const ignoreDM = BotConfigs.getConfig(Dataset.ignoreDM)
 
-        // this.sendMessageForAI( message )
-
-        const ignoreDM = BotConfigs.getConfig( Dataset.ignoreDM ) // true
-        // false
-        if( ignoreDM && message.channel.isDMBased() ){
-            
+        if (ignoreDM && message.channel.isDMBased()) {
             Log.info("Main> Ignoring DM Message")
-            
             return
-        
         }
 
-        if( !process.env.CLIENT_ID  ){
-
+        if (!process.env.CLIENT_ID) {
             const error = new Error('O ID do cliente não foi declarado')
-
-            Log.fatal( error )
-
+            Log.fatal(error)
             throw error
         }
-        
-        if( content.includes( process.env.CLIENT_ID ) ){
 
-            this.commandBridge('commands', message )
+        /*
+            if (content.includes(process.env.CLIENT_ID)) {
+                this.commandBridge('commands', message)
+                return
+            }
+        */
 
+        if (this.shouldUseCommand(message)) {
+            this.removeCommandFlag(message)
             return
         }
 
-        if( this.shouldUseCommand( message ) ){
-
-            this.executeCommand( message )
-
-            return
-        }
-
-        if( this.autoMod?.getAutoModEnabled() ){
-
-            this.autoMod.messageSended( message )
-                        
+        if (this.autoMod?.getAutoModEnabled()) {
+            this.autoMod.messageSended(message)
         }
 
     }
@@ -451,19 +452,26 @@ class ChernoBot {
 
     public async playAudio( audio:Buffer<ArrayBufferLike> | string ){
         
-        const player = createAudioPlayer()
+        return new Promise( resolve => {
 
-        let audioStream:Readable | undefined
-    
-        if( audio instanceof Buffer ) audioStream = Readable.from( audio )
+            const player = createAudioPlayer()
 
-        const src = createAudioResource( audioStream ?? audio as string  ) 
-
-        player.play( src )
+            let audioStream:Readable | undefined
         
-        this.connection?.subscribe( player )
+            if( audio instanceof Buffer ) audioStream = Readable.from( audio )
 
-        return player
+            const src = createAudioResource( audioStream ?? audio as string  ) 
+
+            player.play( src )
+
+            this.connection?.subscribe( player )
+
+            player.once( AudioPlayerStatus.Idle, () => {
+                resolve( undefined )
+            })
+
+        })
+
     }
 
     private prepareArgs( args: string[] ){
@@ -487,7 +495,7 @@ class ChernoBot {
 
     public async speak( args: string[] ){
         
-        const feedback = ( message : string, onError: boolean = true) => ({message, onError})
+        const feedback = ( message : string, onError: boolean = true, data?: Promise<unknown>) => ({message, onError, data})
         
         try {
 
@@ -510,11 +518,11 @@ class ChernoBot {
     
                 if( !this.isInVoiceChannel() ) return feedback( "Não esta em um canal de voz." )
                 
-                this.playAudio( wav.buffer )
+                
+                return feedback("OK", false, this.playAudio( wav.buffer ))
     
             })
             
-            return feedback("OK", false)
         } catch ( ex ) {
 
             console.error( ex )
@@ -527,9 +535,21 @@ class ChernoBot {
 
     }
 
-    public async commandBridge ( command: string, message: Message ){
+    public async commandBridge ( message: Message, command: string, args: string[], delay=0 ){
+    
+        return new Promise( resolve => {
+             
+            setTimeout(() => {
+                
+                resolve(
+                    this.executeCommand( message, command, args )
+                )
 
-        await this.executeCommand( message, command )
+            }, delay);
+
+
+        } )
+
 
     }
 

@@ -23,6 +23,7 @@ const Join = createCommand({
          
         await chernoBot.joinInVoiceChannel( channelId )
         
+        return true
     },
     description: fgc.Cyan('Entra na call.')
 })
