@@ -10,12 +10,12 @@ const Speak = createCommand({
 
         const feedback = await chernoBot.speak( args )
        
-        if( feedback.onError ){
+        feedback?.data?.then(() => {
+            console.log('terminei de falar')
+        })
 
-            message.reply( `Erro: ${ feedback.message }` )
+        /// fazer os retornos das funções virem aqui em vez de iniciar a cadeia de funções
 
-            return
-        }
     
     },
 
