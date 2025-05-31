@@ -18,11 +18,11 @@ const Test = createCommand({
 
         const channelId = args.shift()!   
 
-        await chernoBot.commandBridge( message, 'join', [channelId])
+        await chernoBot.commandBridge( message, 'join', [channelId] )
 
-        await chernoBot.commandBridge( message, 'speak', args, 1000)
+        await chernoBot.commandBridge( message, 'speak', args, 1000 )
 
-        // await chernoBot.commandBridge( message, 'leave', [] )
+        await chernoBot.commandBridge( message, 'leave', [] )
     },
 
     options: { 
