@@ -10,8 +10,7 @@ const fgc = getForeGoundColors()
 
 const Play = createCommand({
     name:'play',
-    execute:( { chernoBot, args } : CommandParams ) => {
-
+    execute: async ( { chernoBot, args } : CommandParams ) => {
     
         if( !chernoBot.isInVoiceChannel() ){
             // esperar o bot entrar na call
@@ -20,9 +19,12 @@ const Play = createCommand({
 
         const audioUrl = args.shift()
     
-        const audioPath = audioUrl ?? path.join( __dirname, '../audio/nuclear siren.mp3')
-    
-        chernoBot.playAudio( audioPath )
+        // const audioPath = audioUrl ?? path.join( __dirname, '../audio/nuclear siren.mp3')
+        const audioPath = audioUrl ?? path.join( __dirname, '../../audio/telepatia.mp3')
+        
+        console.log( audioPath )
+
+        await chernoBot.playAudio( audioPath )
         
     },
 

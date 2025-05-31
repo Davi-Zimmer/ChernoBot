@@ -2,7 +2,7 @@
  * @author Zimsky_Davi
  */
 
-import dotenv from "dotenv"
+import dotenv, { config } from "dotenv"
 import { Readable } from "stream"
 import path from "path"
 import espeak from 'espeak'
@@ -27,7 +27,7 @@ import Join from "../commands/audio/Join"
 import Leave from "../commands/audio/Leave"
 import Play from "../commands/audio/Play"
 import Test from "../commands/dev/Test"
-import Speak from "../commands/fun/Speak"   
+import Speak from "../commands/fun/Speak"
 import ClearChat from "../commands/moderation/ClearChat"
 import Batch from "../commands/utilities/Batch"
 import Commands from "../commands/utilities/Commands"
@@ -54,6 +54,7 @@ import { response } from "express"
 import fs from 'fs'
 import BotConfigs from "../utils/BotConfigs"
 import Dataset from "../interfaces/datasetEnum"
+import { rejects } from "assert"
 
 
 Log.setConsoleLogs( true )
@@ -264,18 +265,30 @@ class ChernoBot {
         return this.isAllowed( required, memberPermissions )
     }
 
-    private logCommand( user: User, commandName:string, isAllowed:boolean ){
+    private logCommandExecution( user: User, commandName:string, isAllowed:boolean ){
         const userName = user.globalName || user.displayName || user.username
-        const userInfo = `[Usuario: ${ userName } ID: ${user.id} ]`
+        const userInfo = `[ Usuario: ${ userName } ID: ${user.id} ]`
 
         if ( !isAllowed ) {
-            Log.info(`Main> ${userInfo} ] Não pode usar o comando ${commandName}`)
+            Log.info(`Main> ${userInfo} Não pode usar o comando ${commandName}`)
         } else {
             Log.info(`Main> ${userInfo} -> ${commandName}`)
         }
     }
 
-    private executeCommand( message: Message, commandName: string, args: string[] ){
+    private logCommandAutoExecution( commandName:string, isAllowed:boolean ){
+
+        const chernoData = `[ ChernoBot: SelfCall ]`
+
+        if( !isAllowed ){
+            Log.info(`Main> ${chernoData}: Sem permissão para executar "${commandName}"`)
+            return
+        }
+
+        Log.info(`Main> ${chernoData} -> ${commandName}`)
+    }
+
+    private executeCommand( message: Message, commandName: string, args: string[], isAutoCall:boolean=false ){
 
         return new Promise( async ( resolve, reject ) => {
             const command = this.getCommandByName( commandName )
@@ -287,9 +300,9 @@ class ChernoBot {
             
             const isAllowed = this.hasPermission( command, message.member! )
 
-            this.logCommand( message.author, commandName, isAllowed )
-
-
+            if( !isAutoCall ) this.logCommandExecution( message.author, commandName, isAllowed )
+            else this.logCommandAutoExecution( commandName, isAllowed )
+           
             if( !isAllowed ) {
                 accessDenied( message )
                 reject('Sem permissão.')
@@ -450,7 +463,7 @@ class ChernoBot {
         } catch {}
     }
 
-    public async playAudio( audio:Buffer<ArrayBufferLike> | string ){
+    public async playAudio( audio:Buffer<ArrayBufferLike> | string, callback?:Function  ){
         
         return new Promise( resolve => {
 
@@ -468,13 +481,14 @@ class ChernoBot {
 
             player.once( AudioPlayerStatus.Idle, () => {
                 resolve( undefined )
+                callback?.()
             })
 
         })
 
     }
 
-    private prepareArgs( args: string[] ){
+    public argsToSpeak( args: string[] ){
 
         const msg = processMessageToSpeak( args )
 
@@ -493,45 +507,29 @@ class ChernoBot {
 
     }
 
-    public async speak( args: string[] ){
-        
-        const feedback = ( message : string, onError: boolean = true, data?: Promise<unknown>) => ({message, onError, data})
-        
-        try {
+    public createAudio( content:string, configs: string[] ): Promise<Buffer<ArrayBufferLike>>{
 
-            const { configs, content } = this.prepareArgs( args )
+        return new Promise( ( resolve, rejects ) => {
 
-            if( !content ){
-                return feedback('Sem conteúdo na mensagem')
-            }
+            if( !content ) return rejects('Sem conteúdo na mensagem')
         
             espeak.speak(content, configs, (err, wav) => {
 
-                fs.writeFileSync("./src/audio/test.wav", wav.buffer);
+                fs.writeFileSync("./src/audio/test.wav", wav.buffer)
 
                 if( err ) {
 
                     console.log( err )
 
-                    return feedback( "Algo deu errado." )
+                    return rejects('Algo deu errado.')
                 }
-    
-                if( !this.isInVoiceChannel() ) return feedback( "Não esta em um canal de voz." )
+
+                if( !this.isInVoiceChannel() ) return rejects('Não esta em um canal de voz.')
                 
-                
-                return feedback("OK", false, this.playAudio( wav.buffer ))
-    
+                resolve( wav.buffer )
+
             })
-            
-        } catch ( ex ) {
-
-            console.error( ex )
-        
-            Log.error('Main> Erro no TTS', ex as Error)
-
-            return feedback("Erro no speaker.")
-        }
-
+        })        
 
     }
 
@@ -542,14 +540,12 @@ class ChernoBot {
             setTimeout(() => {
                 
                 resolve(
-                    this.executeCommand( message, command, args )
+                    this.executeCommand( message, command, args, true )
                 )
 
-            }, delay);
-
+            }, delay)
 
         } )
-
 
     }
 
@@ -565,6 +561,6 @@ class ChernoBot {
 
 const chernoBot = ChernoBot.getInstance()
 
-const server = startServer()
+// const server = startServer()
 
 export { ChernoBot, chernoBot }

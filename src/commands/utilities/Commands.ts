@@ -7,7 +7,7 @@ const fgc = getForeGoundColors()
 
 const Commands = createCommand({
     name: 'commands',
-    execute: ( { chernoBot, message, client } ) => {
+    execute: async ( { chernoBot, message, client } ) => {
        
         const visibleCommands = chernoBot.getCommands().filter( command => !command.options?.isHidden )
         

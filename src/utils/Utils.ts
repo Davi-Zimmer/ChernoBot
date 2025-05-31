@@ -3,7 +3,7 @@ const rnd = ( n: number = 1 )  => Math.floor( Math.random() * n )
 function processMessageToSpeak( args: string[] ){
 
     const commands = new Set([
-       '-s', '-v', '-p' 
+       '-s', '-v', '-p', '-a'
     ])
     
     const params: string[][] = []

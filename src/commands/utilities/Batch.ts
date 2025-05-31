@@ -6,18 +6,17 @@ const fgc = getForeGoundColors()
 
 const Batch = createCommand({
     name: 'batch',
-    execute: ( { message, args, chernoBot }: CommandParams ) => {
+    execute: async ( { message, args, chernoBot }: CommandParams ) => {
         
         const commands = args.join(' ').replaceAll('\n', '').split(';')
 
-        console.log( commands )
-
-        commands.forEach( async command => {
+        for( const command of commands ){
             
-            chernoBot.commandBridge( command, message )
+            const commandArgs = command.split(' ')
+            const commandName = commandArgs.shift()!
 
-        })
-
+            await chernoBot.commandBridge( message, commandName, commandArgs )            
+        }
     },
 
     description: fgc.Cyan('Executa vários comandos de uma só vez.')
