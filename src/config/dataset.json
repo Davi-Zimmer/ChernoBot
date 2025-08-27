@@ -1,8 +1,0 @@
-{
-    "ignoreBotMessages": true,
-    "usePrefix": true,
-    "ignoreDM": false,
-    "logFile": true,
-    "overwriteLogFile": true,
-    "consoleLogs" : true
-}
