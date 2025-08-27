@@ -1,5 +1,5 @@
 import { Message } from "discord.js";
-import ChernoBot from "../main/Main";
+import { ChernoBot } from "../main/Main.js";
 import DataManager from "../database/DataManager";
 
 class AutoMod {
@@ -22,9 +22,7 @@ class AutoMod {
         const clientGuilds = this.chernoBot.getClient().guilds.cache
 
 
-        clientGuilds.forEach( guild => {
-            
-        })
+        // clientGuilds.forEach( guild => {})
 
     }
 

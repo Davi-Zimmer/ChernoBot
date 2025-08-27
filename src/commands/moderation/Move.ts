@@ -1,8 +1,8 @@
-import CommandParams from "../interfaces/CommandParams.Type";
-import createCommand from "../utils/CreateCommand";
-import { accessDenied, isOwner } from "../utils/Security";
+import CommandParams from "../../interfaces/CommandParams.Type";
+import createCommand from "../../utils/CreateCommand";
+import { accessDenied, isOwner } from "../../utils/Security";
 
-import getForeGoundColors from "../classes/ForegroundColors";
+import getForeGoundColors from "../../classes/ForegroundColors";
 import { PermissionsBitField } from "discord.js";
 const fgc = getForeGoundColors()
 

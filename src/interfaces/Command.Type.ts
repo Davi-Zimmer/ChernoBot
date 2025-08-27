@@ -6,7 +6,7 @@ export default interface CommandType {
 
     name: string
 
-    execute: ( object : CommandParams  ) => void
+    execute: ( object : CommandParams  ) => Promise< void | string | number | boolean >
 
     options ?: {
         admin    ?: boolean // permite apenas para cargos com admin 

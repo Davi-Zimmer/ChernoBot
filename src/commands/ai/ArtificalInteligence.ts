@@ -1,11 +1,13 @@
-import CommandParams from "../interfaces/CommandParams.Type";
-import createCommand from "../utils/CreateCommand";
+import CommandParams from "../../interfaces/CommandParams.Type";
+import createCommand from "../../utils/CreateCommand";
 
-import getForeGoundColors from "../classes/ForegroundColors";
-import Log from "../config/Logger";
+import getForeGoundColors from "../../classes/ForegroundColors";
+import Log from "../../config/Logger";
+import { Message } from "discord.js";
+import { ChernoBot } from "../../main/Main";
 const fgc = getForeGoundColors()
 
-function sendRequest( msg: string ){
+export function sendRequest( msg: string ){
     return fetch("http://localhost:11434/api/generate", {
         method: "POST",
         headers: {
@@ -45,7 +47,7 @@ function extractJsonResponses(buffer: string, callback: ( aIresponse:string ) =>
     return finalResponse;
 }
 
-async function processResponse( response:Response ) {
+export async function processResponse( response:Response ) {
     if (!response.ok) {
         throw new Error(`Erro na API: ${response.status} - ${response.statusText}`);
     }
@@ -89,32 +91,39 @@ const IA = createCommand({
             const sender = message.author.globalName
     
             const msg = message.content.replace('-ia', '')
-
+    
             message.channel.sendTyping()
-
+    
+            Log.info(`IA> Mensagem: ${msg}`)
             Log.info('AI> Enviando solicitação à rede')
             const request = await sendRequest( `sender:"${sender} ${msg}` )
             
             const aIResponse = await processResponse( request )
-
+    
             if( !aIResponse ) return
-
+    
             if( message.member?.voice.channel?.id && chernoBot.getConnection() ){
                 
                 Log.info('AI> Usuário esta em canal de voz. Iniciando a fala')
+    
+                const a = aIResponse.split(' ')
 
-                chernoBot.speak( aIResponse.split(' ') )
+                console.log( a )
 
+                chernoBot.commandBridge( message, 'speak', a )
+
+                // chernoBot.speak( aIResponse.split(' ') )
+    
             }
-
+    
             message.reply( aIResponse )
-
+    
         } catch ( ex ) {
             
             const errorMsg = 'A Rede neural não esta ativa'
-
+    
             message.reply( errorMsg )
-
+    
             Log.error( errorMsg, ex as Error )
         }
 

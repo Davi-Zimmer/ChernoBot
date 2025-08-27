@@ -1,7 +1,7 @@
-import CommandParams from "../interfaces/CommandParams.Type";
-import createCommand from "../utils/CreateCommand";
+import CommandParams from "../../interfaces/CommandParams.Type";
+import createCommand from "../../utils/CreateCommand";
 
-import getForeGoundColors from "../classes/ForegroundColors";
+import getForeGoundColors from "../../classes/ForegroundColors";
 import { PermissionFlagsBits, PermissionsBitField } from "discord.js";
 const fgc = getForeGoundColors()
 
@@ -23,6 +23,7 @@ const Join = createCommand({
          
         await chernoBot.joinInVoiceChannel( channelId )
         
+        return true
     },
     description: fgc.Cyan('Entra na call.')
 })
