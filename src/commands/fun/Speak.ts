@@ -12,7 +12,7 @@ const Speak = createCommand({
         try {
             const { content, configs } = chernoBot.argsToSpeak( args )
 
-            const buffer  = await chernoBot.createAudio( content, configs )
+            const buffer = await chernoBot.createAudio( content, configs )
 
             await chernoBot.playAudio( buffer )
 

@@ -33,6 +33,9 @@ import Batch from "../commands/utilities/Batch"
 import Commands from "../commands/utilities/Commands"
 import StartAI, { startProcess } from "../commands/ai/Neural"
 import Say from "../commands/fun/Say"
+import Ignore from "../commands/moderation/Ignore"
+import UnIgnore from "../commands/moderation/UnIgnore"
+
 //types
 import CommandType from "../interfaces/Command.Type"
 import ReactionEventParams from "../interfaces/ReactionEventParams.Type"
@@ -191,7 +194,10 @@ class ChernoBot {
             Commands,
             StartAI,
             RegisterConfig,
-            Say
+            Say,
+            Ignore,
+            UnIgnore
+
         ]
 
         Log.info(`Main> Comandos carregados: ${ commands.length + 1 } comandos.`)
@@ -256,6 +262,13 @@ class ChernoBot {
 
     }
 
+    private isIgnoredUser( id:string ){
+        const users = DataManager.GetItem('ignoreUsers') as string[]
+
+        return users.some( userId => userId == id )
+
+    }
+
     private getCommandByName( commandName:string ){
         return this.commands.find( command => command.name === commandName )
     }
@@ -264,6 +277,7 @@ class ChernoBot {
         const required = command.options?.permissions
         const memberPermissions = member?.permissions
         return this.isAllowed( required, memberPermissions )
+
     }
 
     private logCommandExecution( user: User, commandName:string, isAllowed:boolean ){
@@ -296,7 +310,19 @@ class ChernoBot {
 
             if( !command || command.options?.disabled) {
                 reject()
-                throw new Error( 'O comando não existe ou esta desativado. ' )
+                message.reply('O comando não existe ou esta desativado.')
+                // throw new Error( 'O comando não existe ou esta desativado. ' )
+                return
+            }
+            console.log(command) 
+            
+            if( this.isIgnoredUser( message.member?.id! ) && message.member?.id! !== process.env.OWNER_ID ){
+                message.reply('Sem autorização.')
+                return
+            }
+
+            if( command.options?.ownerOnly && message.member?.id! !== process.env.OWNER_ID ){
+                message.reply('Este comando é exclusivo para o desenvolvedor.')
                 return
             }
             
@@ -325,18 +351,14 @@ class ChernoBot {
 
         const commandName = command ?? args.shift()!.replace(process.env.PREFIX!, '')
 
-
         try {
             await this.executeCommand( message, commandName, args )
 
         } catch( err ){
 
-            Log.error( "Erro ao executar comando:", err as Error)
-            console.log( err )
+            Log.error( "Erro ao executar comando" )
+            // console.log( err )
         }
-        
-        
-
 
     }
 
@@ -513,7 +535,7 @@ class ChernoBot {
         const { lang, params } = getParamsAndLanguage( msg.params )
 
         espeak.cmd = path.join( __dirname, '../speaker/command_line/espeak.exe');
-        
+
         return {
             configs: [...lang, ...params],
             content
@@ -586,3 +608,6 @@ const chernoBot = ChernoBot.getInstance()
 // const server = startServer()
 
 export { ChernoBot, chernoBot }
+
+
+

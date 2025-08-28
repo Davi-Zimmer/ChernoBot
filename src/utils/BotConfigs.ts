@@ -34,6 +34,7 @@ class Configs {
         return this.dataset[ name ]
     }
 
+
 }
 
 const BotConfigs = Configs.GetInstance()

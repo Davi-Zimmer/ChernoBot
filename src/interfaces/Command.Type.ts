@@ -12,7 +12,8 @@ export default interface CommandType {
         admin    ?: boolean // permite apenas para cargos com admin 
         isHidden ?: boolean // esconde o comando da listagem de comandos
         disabled ?: boolean // se vai ser utilizado
-        permissions ?: bigint[]  
+        permissions ?: bigint[]
+        ownerOnly ?: boolean 
     },
     description?:  string,   // a descrição vai aparecer na apresentação de comandos
     
