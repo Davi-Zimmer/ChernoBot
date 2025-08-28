@@ -180,10 +180,11 @@ class Logger {
 
     }
 
-    public error( msg: string, error: Error ){
+    public error( msg: string, error?: Error ){
         
-        this.echo('Error', `${msg}\n  → ${error.name}: ${error.message}\n  ↪ ${error.stack}`)
-        
+        if( !error) this.echo('Error', `${msg}`)
+        else this.echo('Error', `${msg}\n  → ${error.name}: ${error.message}\n  ↪ ${error.stack}`)
+
     }
 
     public fatal( msg: string | Error ){

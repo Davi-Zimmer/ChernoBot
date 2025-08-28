@@ -3,6 +3,9 @@ import { chernoBot } from "../../main/Main";
 import createCommand from "../../utils/CreateCommand";
 import path from "path"
 import { spawn } from "child_process";
+import getForeGoundColors from "../../classes/ForegroundColors";
+const fgc = getForeGoundColors()
+
 
 const audioPath = path.join( __dirname, "..", "..", "audio")
 
@@ -43,7 +46,8 @@ const Say = createCommand({
 
         chernoBot.playAudio( generatedAudioPath )
 
-    }
+    },
+    description: fgc.Cyan('Usa o TTS com alta qualidade'),
 })
 
 
