@@ -53,6 +53,7 @@ const Ignore = createCommand({
     description: fgc.Cyan('Adiciona os usuários na lista negra que impede de usarem comandos.'),
 
     options:{
+        devOnly: true,
         ownerOnly: true
     }
 })

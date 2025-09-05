@@ -13,7 +13,8 @@ export default interface CommandType {
         isHidden ?: boolean // esconde o comando da listagem de comandos
         disabled ?: boolean // se vai ser utilizado
         permissions ?: bigint[]
-        ownerOnly ?: boolean 
+        devOnly?: boolean,
+        ownerOnly?: boolean
     },
     description?:  string,   // a descrição vai aparecer na apresentação de comandos
     

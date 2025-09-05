@@ -59,7 +59,7 @@ export default class DataManager {
 
     }
 
-    public static SetItem( key:string, data: number | string | boolean | Array< any > ){
+    public static SetItem( key:string, data: number | string | boolean | Array< any > | any ){
         
         const database = this.LoadDatabase()
 

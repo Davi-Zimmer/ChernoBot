@@ -29,9 +29,9 @@ const UnIgnore = createCommand({
         else message.reply( 'Usuários não estão mais na ignorados')
 
     },
-    description: fgc.Cyan('Remvove os usuários na lista negra.'),
+    description: 'Remove os usuários na lista',
     options:{
-        ownerOnly: true
+        devOnly: true
     }
 })
 

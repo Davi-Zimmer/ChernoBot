@@ -15,7 +15,7 @@ let evetnManager: GuildScheduledEvent<GuildScheduledEventStatus>
 const Test = createCommand({
     name: 'test',
     execute: async ( { client, chernoBot, message, args } : CommandParams ) => {
-
+        /*
         const channelId = args.shift()!   
 
         await chernoBot.commandBridge( message, 'join', [channelId] )
@@ -23,14 +23,17 @@ const Test = createCommand({
         await chernoBot.commandBridge( message, 'speak', args, 1000 )
 
         await chernoBot.commandBridge( message, 'leave', [] )
+        */
+
+        message.reply('cosneguiu usar')
     },
 
     options: { 
         isHidden: true,
-        permissions: [
-            PermissionsBitField.Flags.Administrator
-        ]
-        
+        permissions: [ PermissionsBitField.Flags.Administrator ],
+
+        ownerOnly: true,
+        devOnly: true
     }
 
 })

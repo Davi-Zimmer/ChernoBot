@@ -47,7 +47,7 @@ const Say = createCommand({
         chernoBot.playAudio( generatedAudioPath )
 
     },
-    description: fgc.Cyan('Usa o TTS com alta qualidade'),
+   // description: fgc.Cyan('Usa o TTS com alta qualidade'),
 })
 
 

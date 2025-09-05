@@ -35,6 +35,9 @@ import StartAI, { startProcess } from "../commands/ai/Neural"
 import Say from "../commands/fun/Say"
 import Ignore from "../commands/moderation/Ignore"
 import UnIgnore from "../commands/moderation/UnIgnore"
+import ASM from "../commands/dev/ASM"
+import EndServer from "../commands/moderation/EndServer"
+
 
 //types
 import CommandType from "../interfaces/Command.Type"
@@ -159,7 +162,8 @@ class ChernoBot {
                     GatewayIntentBits.MessageContent,
                     GatewayIntentBits.GuildMessageReactions,
                     GatewayIntentBits.DirectMessages,
-                    GatewayIntentBits.GuildVoiceStates
+                    GatewayIntentBits.GuildVoiceStates,
+                    GatewayIntentBits.GuildMembers
                 ],
                 partials: [
                     Partials.Message,
@@ -196,8 +200,9 @@ class ChernoBot {
             RegisterConfig,
             Say,
             Ignore,
-            UnIgnore
-
+            UnIgnore,
+            ASM,
+            EndServer
         ]
 
         Log.info(`Main> Comandos carregados: ${ commands.length + 1 } comandos.`)
@@ -280,15 +285,11 @@ class ChernoBot {
 
     }
 
-    private logCommandExecution( user: User, commandName:string, isAllowed:boolean ){
+    private logCommandExecution( user: User, commandName:string ){
         const userName = user.globalName || user.displayName || user.username
         const userInfo = `[ Usuario: ${ userName } ID: ${user.id} ]`
 
-        if ( !isAllowed ) {
-            Log.info(`Main> ${userInfo} Não pode usar o comando ${commandName}`)
-        } else {
-            Log.info(`Main> ${userInfo} -> ${commandName}`)
-        }
+        Log.info(`Main> ${userInfo} -> ${commandName}`)
     }
 
     private logCommandAutoExecution( commandName:string, isAllowed:boolean ){
@@ -303,37 +304,52 @@ class ChernoBot {
         Log.info(`Main> ${chernoData} -> ${commandName}`)
     }
 
+    private commandDenied( reazon: string, msg: Message, logReazon?:string ){
+        msg.reply( reazon )
+
+        const realReazon = logReazon ? logReazon : reazon
+
+        Log.info(`Main> Comando negado: ${realReazon}`)
+
+
+    }
+
     private executeCommand( message: Message, commandName: string, args: string[], isAutoCall:boolean=false ){
 
         return new Promise( async ( resolve, reject ) => {
             const command = this.getCommandByName( commandName )
 
+            this.logCommandExecution( message.author, commandName )
+
             if( !command || command.options?.disabled) {
                 reject()
                 message.reply('O comando não existe ou esta desativado.')
-                // throw new Error( 'O comando não existe ou esta desativado. ' )
                 return
             }
-            console.log(command) 
             
             if( this.isIgnoredUser( message.member?.id! ) && message.member?.id! !== process.env.OWNER_ID ){
-                message.reply('Sem autorização.')
+                this.commandDenied( "Acesso negado", message, "lista negra")
                 return
             }
 
-            if( command.options?.ownerOnly && message.member?.id! !== process.env.OWNER_ID ){
-                message.reply('Este comando é exclusivo para o desenvolvedor.')
+            if( command.options?.ownerOnly && message.member?.id! !== message.guild?.ownerId ){
+                this.commandDenied( "Apenas o dono do servidor pode executar este comando", message, "Reservado ao dono do servidor")
+                return
+            }
+
+            if( command.options?.devOnly && message.member?.id! !== process.env.OWNER_ID ){
+                this.commandDenied( "Apenas o desenvolvedor pode executar este comando", message, "Reservado ao desenvolvedor")
                 return
             }
             
             const isAllowed = this.hasPermission( command, message.member! )
-
-            if( !isAutoCall ) this.logCommandExecution( message.author, commandName, isAllowed )
-            else this.logCommandAutoExecution( commandName, isAllowed )
-           
+          
             if( !isAllowed ) {
-                accessDenied( message )
-                reject('Sem permissão.')
+                // accessDenied( message )
+                // reject('Sem permissão.')
+
+                this.commandDenied( "Sem permissão", message, "Sem o cargo necessário")
+
                 return
             }
 
@@ -582,8 +598,8 @@ class ChernoBot {
                     )
 
                 } catch ( err ) {
-                    console.error( err )
-                    Log.error( "Erro ao executar comando:", err as Error)
+                    // console.error( err )
+                    Log.error( "Erro ao executar comando" )
                 }
 
 
